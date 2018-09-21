@@ -1,117 +1,66 @@
-{-# LANGUAGE LambdaCase, DeriveGeneric, OverloadedStrings #-}
+{-# LANGUAGE LambdaCase, OverloadedStrings #-}
 
 module Main where
 
-import Control.Monad (forever, forM_)
-import Data.ByteString.Char8 as C8 (pack, unpack, ByteString)
-import qualified Data.Yaml as Yaml
-import Data.Text as T (Text, pack, unpack)
-import GHC.Generics
-import System.Exit (exitSuccess)
+import Control.Monad.IO.Class (liftIO)
+import Control.Monad (forever)
+import System.Exit (exitSuccess, exitFailure)
 import System.Environment (getArgs)
 
-import Control.Monad.Reader (ReaderT, ask, runReaderT, lift)
-
-import qualified Contact
-import Contact (Contact)
 import qualified Contacts
-import Contacts (Contacts)
 
-data Action = ListContacts | AddContact | Quit
+import qualified Application
+import Application (Application, runApplication)
+import Types
 
-data Config = Config { configFile :: String }
-
-type Application = ReaderT Config IO ()
-
-actionFromString :: String -> Maybe Action
-actionFromString =
-    \case
-        "l" -> Just ListContacts
-        "a" -> Just AddContact
-        "q" -> Just Quit
-        _   -> Nothing
-
-getAction :: IO (Maybe Action)
-getAction =  actionFromString <$> getLine
-
-printContact :: Contact -> IO ()
-printContact contact = do
-    putStrLn $ "Name:   " ++ (T.unpack $ Contact.name contact)
-    putStrLn $ "Number: " ++ (T.unpack $ Contact.number contact)
-    putStrLn " ---"
-
-listContacts :: Contacts -> IO ()
-listContacts contacts = do
-    forM_ (Contacts.asList contacts) printContact
-
-getContact :: IO Contact
-getContact = do
-    putStrLn "Enter Name:"
-    name <- T.pack <$> getLine
-
-    putStrLn "Enter Number:"
-    number <- T.pack <$> getLine
-
-    return $ Contact.new name number
-
-writeContacts :: Contacts -> Application
-writeContacts contacts = do
-    config <- ask
-    let content = C8.unpack $ Yaml.encode contacts
-    lift $ writeFile (configFile config) content
-
-addContact :: Contacts -> Application
-addContact contacts = do
-    contact <- lift getContact
-
-    writeContacts (Contacts.add contact contacts)
-
-    lift $ putStrLn "saved"
-
-doAction :: Contacts -> Action -> Application
-doAction contacts =
-    \case
-        ListContacts -> lift $ listContacts contacts
-        AddContact   -> addContact contacts
-        Quit         -> lift exitSuccess
-
-readContacts :: Config -> IO (Either Yaml.ParseException Contacts)
-readContacts config = do
-    contents <- readFile $ configFile config
-
-    return $ Yaml.decodeEither' $ C8.pack contents
-
-getConfig = do
-    args <- getArgs
-
-    let configFile = head args
-
-    return $ Config { configFile = configFile }
+-- Main
 
 main :: IO ()
 main = do
-    putStrLn "=== Phone Book ==="
+    config  <- loadConfig
+    runApplication config Contacts.new application
 
-    config  <- getConfig
-    decoded <- readContacts config
+application :: Application ()
+application = do
+    Application.printWelcomeBanner
 
-    case decoded of
-        Right contacts -> forever $ mainLoop config contacts
-        Left err       -> putStrLn $ show err
+    contacts <- Application.readContacts
 
-printCommandList :: IO ()
-printCommandList = do
-    putStrLn "Commands:"
-    putStrLn "  l  List contacts"
-    putStrLn "  a  Add contact"
-    putStrLn "  q  Add contact"
+    case contacts of
+        Right cs  -> Application.putContacts cs
+        Left err  -> do liftIO $ print err
+                        liftIO exitFailure
 
-mainLoop :: Config -> Contacts -> IO ()
-mainLoop config contacts = do
-    printCommandList
+    forever mainLoop
 
-    action <- getAction
+mainLoop :: Application ()
+mainLoop = do
+    Application.printCommandList
+
+    action <- Application.getAction
 
     case action of
-       Just a  -> runReaderT (doAction contacts a) config
-       Nothing -> putStrLn "Bad command"
+       Just a  -> doAction a
+       Nothing -> liftIO $ putStrLn "Bad command"
+
+doAction :: Action -> Application ()
+doAction =
+    \case
+        ListContacts -> Application.listContacts
+        AddContact   -> addContact
+        Quit         -> liftIO exitSuccess
+
+addContact :: Application ()
+addContact = do
+    contacts <- Application.getContacts
+    contact  <- Application.getContact
+
+    Application.putContacts (Contacts.add contact contacts)
+
+    Application.writeContacts
+
+loadConfig :: IO Config
+loadConfig = do
+    args <- getArgs
+
+    return Config { configFile = head args }

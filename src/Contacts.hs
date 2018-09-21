@@ -2,10 +2,11 @@
 module Contacts
     ( Contacts
     , new
-    , asList
     , add
+    , foreach
     ) where
 
+import Control.Monad (forM_)
 import qualified Data.Yaml as Yaml
 import GHC.Generics
 
@@ -19,8 +20,8 @@ instance Yaml.ToJSON Contacts
 new :: Contacts
 new = Contacts []
 
-asList :: Contacts -> [Contact]
-asList (Contacts contacts) = contacts
-
 add :: Contact -> Contacts -> Contacts
 add contact (Contacts contacts) = Contacts (contact : contacts)
+
+foreach :: Monad m => Contacts -> (Contact -> m a) -> m ()
+foreach (Contacts contacts) f = forM_ contacts f
