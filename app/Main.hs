@@ -2,9 +2,7 @@
 
 module Main where
 
-import Control.Monad.IO.Class (liftIO)
 import Control.Monad (forever)
-import System.Exit (exitSuccess, exitFailure)
 import System.Environment (getArgs)
 
 import qualified Contacts
@@ -12,13 +10,15 @@ import qualified Contacts
 import qualified Application
 import Application (Application, runApplication)
 import Types
+import qualified UI
 
 -- Main
 
 main :: IO ()
 main = do
+    putStrLn ""
     config  <- loadConfig
-    runApplication config Contacts.new application
+    runApplication UI.interpret config Contacts.new application
 
 application :: Application ()
 application = do
@@ -28,8 +28,8 @@ application = do
 
     case contacts of
         Right cs  -> Application.putContacts cs
-        Left err  -> do liftIO $ print err
-                        liftIO exitFailure
+        Left err  -> do Application.printMessage (show err)
+                        Application.exit 1
 
     forever mainLoop
 
@@ -41,14 +41,14 @@ mainLoop = do
 
     case action of
        Just a  -> doAction a
-       Nothing -> liftIO $ putStrLn "Bad command"
+       Nothing -> Application.printMessage "Bad command"
 
 doAction :: Action -> Application ()
 doAction =
     \case
         ListContacts -> Application.listContacts
         AddContact   -> addContact
-        Quit         -> liftIO exitSuccess
+        Quit         -> Application.exit 0
 
 addContact :: Application ()
 addContact = do

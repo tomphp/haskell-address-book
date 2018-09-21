@@ -1,7 +1,7 @@
 module Application where
 
-import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Reader (ReaderT, runReaderT, ask)
+import Control.Monad.Free (Free(..))
+import Control.Monad.Reader (ReaderT, runReaderT, ask, lift)
 import Control.Monad.State (StateT, runStateT, get, put)
 
 import qualified Data.Yaml as Yaml
@@ -10,14 +10,11 @@ import Contacts (Contacts)
 import Contact (Contact)
 import Types
 
-import qualified File
-import qualified UI
+type Application = StateT Contacts (ReaderT Config (Free Command))
 
-type Application = StateT Contacts (ReaderT Config IO)
-
-runApplication :: Config -> Contacts -> Application () -> IO ()
-runApplication config contacts application =
-    fst <$> runReaderT (runStateT application contacts) config
+runApplication :: Interpreter -> Config -> Contacts -> Application () -> IO ()
+runApplication interpreter config contacts application =
+    interpreter $ fst <$> runReaderT (runStateT application contacts) config
 
 getConfig :: Application Config
 getConfig = ask
@@ -28,35 +25,43 @@ getContacts = get
 putContacts :: Contacts -> Application ()
 putContacts = put
 
--- UI Delegations
+-- Freeness
+
+liftFree :: Free Command a -> Application a
+liftFree = lift . lift
 
 printWelcomeBanner :: Application ()
-printWelcomeBanner = liftIO UI.printWelcomeBanner
+printWelcomeBanner = liftFree $ Free (DisplayWelcomeBanner (Pure ()))
+
+printMessage :: String -> Application ()
+printMessage message = liftFree $ Free (DisplayMessage message (Pure ()))
 
 getAction :: Application (Maybe Action)
-getAction = liftIO UI.getAction
+getAction = liftFree $ Free (GetAction Pure)
 
 listContacts :: Application ()
-listContacts = getContacts >>= liftIO . UI.listContacts
-
-printContact :: Contact -> Application ()
-printContact = liftIO . UI.printContact
+listContacts = do
+    contacts <- getContacts
+    liftFree $ Free (DisplayContactList contacts (Pure ()))
 
 getContact :: Application Contact
-getContact = liftIO UI.getContact
+getContact = liftFree $ Free (GetContact Pure)
 
 printCommandList :: Application ()
-printCommandList = liftIO UI.printCommandList
-
--- File
+printCommandList = liftFree $ Free (DisplayCommandList (Pure ()))
 
 readContacts :: Application (Either Yaml.ParseException Contacts)
-readContacts =
-    Application.getConfig >>= liftIO . File.readContacts . configFile
+readContacts = do
+    config <- getConfig
+
+    liftFree $ Free (ReadContacts (configFile config) Pure)
 
 writeContacts :: Application ()
 writeContacts = do
-    config  <- Application.getConfig
-    contacts <- Application.getContacts
+    config   <- getConfig
+    contacts <- getContacts
 
-    liftIO $ File.writeContacts (configFile config) contacts
+    liftFree $ Free (WriteContacts (configFile config) contacts (Pure ()))
+
+exit :: Int -> Application ()
+exit code = liftFree $ Free (Exit code)
