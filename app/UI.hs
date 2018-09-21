@@ -20,7 +20,6 @@ interpret (Free (DisplayMessage msg          x)) = UI.printMessage msg >> interp
 interpret (Free (GetAction                   x)) = UI.getAction >>= interpret . x
 interpret (Free (DisplayContactList contacts x)) = UI.listContacts contacts >> interpret x
 interpret (Free (GetContact                  x)) = UI.getContact >>= interpret . x
-interpret (Free (DisplayCommandList          x)) = UI.printCommandList >> interpret x
 interpret (Free (ReadContacts  path          x)) = File.readContacts path >>= interpret . x
 interpret (Free (WriteContacts path contacts x)) = File.writeContacts path contacts >> interpret x
 interpret (Free (Exit code)                    ) = do putStrLn "Exiting"
@@ -30,13 +29,18 @@ interpret (Free (Exit code)                    ) = do putStrLn "Exiting"
 interpret (Pure _)                               = exitSuccess
 
 printWelcomeBanner :: IO ()
-printWelcomeBanner = putStrLn "=== Phone Book ==="
+printWelcomeBanner = do
+    putStrLn "========================================="
+    putStrLn "=== Welcome to the Haskell Phone Book ==="
+    putStrLn "========================================="
 
 printMessage :: String -> IO ()
-printMessage = putStrLn
+printMessage msg = putStrLn $ ">>> " ++ msg
 
 getAction :: IO (Maybe Action)
-getAction =  actionFromString <$> getLine
+getAction = do
+    printCommandList
+    actionFromString <$> getLine
 
 actionFromString :: String -> Maybe Action
 actionFromString =
@@ -68,8 +72,11 @@ getContact = do
 
 printCommandList :: IO ()
 printCommandList = do
-    putStrLn "Commands:"
-    putStrLn "  l  List contacts"
-    putStrLn "  a  Add contact"
-    putStrLn "  q  Add contact"
+    putStrLn "+-|Commands|-------+"
+    putStrLn "| l  List contacts |"
+    putStrLn "| a  Add contact   |"
+    putStrLn "| q  Add contact   |"
+    putStrLn "+------------------+"
+
+
 

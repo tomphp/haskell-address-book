@@ -18,7 +18,6 @@ data Command next = DisplayWelcomeBanner next
                   | GetAction (Maybe Action -> next)
                   | DisplayContactList Contacts next
                   | GetContact (Contact -> next)
-                  | DisplayCommandList next
                   | ReadContacts String (Either Yaml.ParseException Contacts -> next)
                   | WriteContacts String Contacts next
                   | Exit Int deriving (Functor)

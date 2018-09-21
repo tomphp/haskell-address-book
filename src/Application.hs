@@ -1,4 +1,18 @@
-module Application where
+module Application
+    ( Application
+    , runApplication
+    , getConfig
+    , getAction
+    , getContacts
+    , putContacts
+    , printWelcomeBanner
+    , printMessage
+    , listContacts
+    , getContact
+    , readContacts
+    , writeContacts
+    , exit
+    ) where
 
 import Control.Monad.Free (Free(..))
 import Control.Monad.Reader (ReaderT, runReaderT, ask, lift)
@@ -27,41 +41,39 @@ putContacts = put
 
 -- Freeness
 
-liftFree :: Free Command a -> Application a
-liftFree = lift . lift
-
 printWelcomeBanner :: Application ()
-printWelcomeBanner = liftFree $ Free (DisplayWelcomeBanner (Pure ()))
+printWelcomeBanner = outputCommand DisplayWelcomeBanner
 
 printMessage :: String -> Application ()
-printMessage message = liftFree $ Free (DisplayMessage message (Pure ()))
+printMessage message = outputCommand (DisplayMessage message)
 
 getAction :: Application (Maybe Action)
-getAction = liftFree $ Free (GetAction Pure)
+getAction = inputCommand GetAction
 
 listContacts :: Application ()
-listContacts = do
-    contacts <- getContacts
-    liftFree $ Free (DisplayContactList contacts (Pure ()))
+listContacts = getContacts >>= outputCommand . DisplayContactList
 
 getContact :: Application Contact
-getContact = liftFree $ Free (GetContact Pure)
-
-printCommandList :: Application ()
-printCommandList = liftFree $ Free (DisplayCommandList (Pure ()))
+getContact = inputCommand GetContact
 
 readContacts :: Application (Either Yaml.ParseException Contacts)
-readContacts = do
-    config <- getConfig
-
-    liftFree $ Free (ReadContacts (configFile config) Pure)
+readContacts = getConfig >>= inputCommand . ReadContacts . configFile
 
 writeContacts :: Application ()
 writeContacts = do
     config   <- getConfig
     contacts <- getContacts
 
-    liftFree $ Free (WriteContacts (configFile config) contacts (Pure ()))
+    outputCommand (WriteContacts (configFile config) contacts)
 
 exit :: Int -> Application ()
 exit code = liftFree $ Free (Exit code)
+
+outputCommand :: (Free f () -> Command (Free Command a)) -> Application a
+outputCommand command = liftFree $ Free (command (Pure ()))
+
+inputCommand :: ((a -> Free f a) -> Command (Free Command b)) -> Application b
+inputCommand command = liftFree $ Free (command Pure)
+
+liftFree :: Free Command a -> Application a
+liftFree = lift . lift
