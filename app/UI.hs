@@ -4,7 +4,7 @@ module UI where
 
 import Control.Monad.Free (Free(..))
 import qualified Data.Text as T
-import System.Exit (ExitCode(..), exitWith)
+import System.Exit (ExitCode(ExitFailure), exitWith, exitSuccess)
 
 import Types
 import Contacts (Contacts)
@@ -24,10 +24,10 @@ interpret (Free (DisplayCommandList          x)) = UI.printCommandList >> interp
 interpret (Free (ReadContacts  path          x)) = File.readContacts path >>= interpret . x
 interpret (Free (WriteContacts path contacts x)) = File.writeContacts path contacts >> interpret x
 interpret (Free (Exit code)                    ) = do putStrLn "Exiting"
-                                                      exitWith (if code == 0
-                                                                   then ExitSuccess
-                                                                   else ExitFailure code)
-interpret (Pure _)                               = exitWith ExitSuccess
+                                                      case code of
+                                                         0 -> exitSuccess
+                                                         _ -> exitWith (ExitFailure code)
+interpret (Pure _)                               = exitSuccess
 
 printWelcomeBanner :: IO ()
 printWelcomeBanner = putStrLn "=== Phone Book ==="

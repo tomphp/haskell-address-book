@@ -24,4 +24,4 @@ add :: Contact -> Contacts -> Contacts
 add contact (Contacts contacts) = Contacts (contact : contacts)
 
 foreach :: Monad m => Contacts -> (Contact -> m a) -> m ()
-foreach (Contacts contacts) f = forM_ contacts f
+foreach (Contacts contacts) = forM_ contacts
