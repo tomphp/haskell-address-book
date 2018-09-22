@@ -22,10 +22,7 @@ interpret (Free (DisplayContactList contacts x)) = UI.listContacts contacts >> i
 interpret (Free (GetContact                  x)) = UI.getContact >>= interpret . x
 interpret (Free (ReadContacts  path          x)) = File.readContacts path >>= interpret . x
 interpret (Free (WriteContacts path contacts x)) = File.writeContacts path contacts >> interpret x
-interpret (Free (Exit code)                    ) = do putStrLn "Exiting"
-                                                      case code of
-                                                         0 -> exitSuccess
-                                                         _ -> exitWith (ExitFailure code)
+interpret (Free (Exit code)                    ) = exit code
 interpret (Pure _)                               = exitSuccess
 
 printWelcomeBanner :: IO ()
@@ -78,5 +75,10 @@ printCommandList = do
     putStrLn "| q  Add contact   |"
     putStrLn "+------------------+"
 
-
+exit :: Int -> IO ()
+exit code = do
+    putStrLn "Exiting"
+    case code of
+         0 -> exitSuccess
+         _ -> exitWith (ExitFailure code)
 

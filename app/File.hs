@@ -4,7 +4,6 @@ module File
     ) where
 
 import Control.Monad ((>=>))
-import Control.Monad.IO.Class (liftIO)
 import qualified Data.ByteString.Char8 as C8
 import qualified Data.Yaml as Yaml
 
@@ -16,7 +15,7 @@ readContacts =
 
 writeContacts :: String -> Contacts -> IO ()
 writeContacts path =
-    liftIO . writeFile path . encodeContacts
+   writeFile path . encodeContacts
 
 decodeContacts :: String -> Either Yaml.ParseException Contacts
 decodeContacts = Yaml.decodeEither' . C8.pack
