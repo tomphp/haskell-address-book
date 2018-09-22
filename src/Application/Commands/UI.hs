@@ -11,9 +11,9 @@ import Data.Text (Text)
 import qualified Data.Functor.Sum as Sum
 
 import Application.Types.Base (Application)
-import Application.Commands.Base (liftFree, getContacts)
 import Contact (Contact)
 
+import qualified Application.Commands.Base as App
 import qualified Application.Types.UI as UI
 
 displayWelcomeBanner :: Application ()
@@ -23,7 +23,7 @@ displayMessage :: Text -> Application ()
 displayMessage message = uiOutputCommand (UI.DisplayMessage message)
 
 displayContactList :: Application ()
-displayContactList = getContacts >>= uiOutputCommand . UI.DisplayContactList
+displayContactList = App.getContacts >>= uiOutputCommand . UI.DisplayContactList
 
 getAction :: Application (Maybe UI.Action)
 getAction = uiInputCommand UI.GetAction
@@ -41,4 +41,4 @@ uiInputCommand :: ((a -> a) -> UI.Command b) -> Application b
 uiInputCommand command = liftUI (command id)
 
 liftUI :: UI.Command a -> Application a
-liftUI = liftFree . Sum.InL
+liftUI = App.liftFree . Sum.InL

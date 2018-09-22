@@ -12,6 +12,12 @@ import Contacts (Contacts)
 
 data Config = Config { configFile :: FilePath }
 
+data Definition a = Definition
+    { userInterface :: UI.Interpreter a
+    , storageSystem :: Storage.Interpreter a
+    , config        :: Config
+    }
+
 type Program = Free (Sum UI.Command Storage.Command)
 
 type Application = StateT Contacts (ReaderT Config Program)

@@ -1,26 +1,39 @@
-module Application.Commands.Base where
+module Application.Commands.Base
+    ( run
+    , getFilePath
+    , getContacts
+    , putContacts
+    , liftFree
+    ) where
 
 import Control.Monad.Free (liftF, iterM)
 import Control.Monad.Reader (runReaderT, ask)
 import Control.Monad.State (runStateT, lift, put, get)
 import Data.Functor.Sum (Sum(..))
 
-import Application.Types.Base (Application, Program, Config)
+import Application.Types.Base (Application, Definition(..), Program, Config(configFile))
 import Contacts (Contacts)
 
 import qualified Application.Types.Storage as Storage
 import qualified Application.Types.UI as UI
+import qualified Contacts
 
-runApplication :: UI.Interpreter () -> Storage.Interpreter () -> Config -> Contacts -> Application () -> IO ()
-runApplication ui storage config contacts application =
-    interpret ui storage $ fst <$> runReaderT (runStateT application contacts) config
+run :: Definition () -> Application () -> IO ()
+run Definition{userInterface = ui, storageSystem = storage, config = cfg} application =
+    let interpret = interpreter ui storage
+        reader    = runStateT application Contacts.new
+        program   = fst <$> runReaderT reader cfg
+    in interpret program
 
-interpret :: UI.Interpreter a -> Storage.Interpreter a -> Program a -> IO a
-interpret ui storage program =
-  iterM go program
+interpreter :: UI.Interpreter a -> Storage.Interpreter a -> Program a -> IO a
+interpreter ui storage =
+  iterM go
   where
     go (InL cmd) = ui cmd
     go (InR cmd) = storage cmd
+
+getFilePath :: Application FilePath
+getFilePath = configFile <$> getConfig
 
 getConfig :: Application Config
 getConfig = ask

@@ -4,9 +4,7 @@ module Main where
 
 import System.Environment (getArgs)
 
-import qualified Contacts
-
-import qualified Application
+import qualified Application as App
 import qualified UI
 import qualified File
 
@@ -14,14 +12,15 @@ main :: IO ()
 main = do
     config  <- loadConfig
 
-    Application.runApplication UI.interpret
-                               File.interpret
-                               config
-                               Contacts.new
-                               Application.main
+    let appDef = App.Definition { App.userInterface = UI.interpret
+                                , App.storageSystem = File.interpret
+                                , App.config        = config
+                                }
 
-loadConfig :: IO Application.Config
+    App.run appDef App.main
+
+loadConfig :: IO App.Config
 loadConfig = do
     args <- getArgs
 
-    return Application.Config { Application.configFile = head args }
+    return App.Config { App.configFile = head args }
