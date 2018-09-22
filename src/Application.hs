@@ -12,8 +12,9 @@ import Control.Monad (forever)
 import Application.Types.Base
 import Application.Types.UI (Action(..))
 import Application.Commands.Base as App
-import Application.Commands.Storage as Storage
-import Application.Commands.UI as UI
+
+import qualified Application.Commands.Storage as Storage
+import qualified Application.Commands.UI as UI
 
 import qualified Contacts
 

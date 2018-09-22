@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings, LambdaCase #-}
 
-module UI where
+module UI (interpret) where
 
 import Control.Monad.Loops (untilJust)
 import Data.Text (Text)
@@ -34,23 +34,19 @@ printMessage msg = IO.putStrLn $ ">>> " <> msg
 
 getAction :: IO Action
 getAction =
-    untilJust $ do
+    untilRight $ do
         printCommandList
 
-        input <- IO.getLine
+        actionFromString <$> IO.getLine
 
-        case actionFromString input of
-            Just action -> return $ Just action
-            Nothing     -> printMessage "Bad command," >> return Nothing
-
-actionFromString :: Text -> Maybe Action
+actionFromString :: Text -> Either Text Action
 actionFromString =
     \case
-        "l" -> Just ListContacts
-        "a" -> Just AddContact
-        "s" -> Just Save
-        "q" -> Just Quit
-        _   -> Nothing
+        "l" -> Right ListContacts
+        "a" -> Right AddContact
+        "s" -> Right Save
+        "q" -> Right Quit
+        _   -> Left "Bad command."
 
 listContacts :: Contacts -> IO ()
 listContacts contacts =
@@ -64,16 +60,14 @@ printContact contact = do
 
 getContact :: IO Contact
 getContact =
-    untilJust $ do
+    untilRight $ do
         IO.putStrLn "Enter Name:  "
         name <- IO.getLine
 
         IO.putStrLn "Enter Number:"
         number <- IO.getLine
 
-        case Contact.new name number of
-            Right contact -> return $ Just contact
-            Left  msg     -> printMessage msg >> return Nothing
+        return $ Contact.new name number
 
 printCommandList :: IO ()
 printCommandList = do
@@ -91,3 +85,11 @@ exit code = do
          0 -> exitSuccess
          _ -> exitWith (ExitFailure code)
 
+untilRight :: IO (Either Text a) -> IO a
+untilRight action =
+    untilJust $ do
+        result <- action
+
+        case result of
+            Right x   -> return $ Just x
+            Left  msg -> printMessage msg >> return Nothing
