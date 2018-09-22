@@ -1,16 +1,23 @@
 module Application.Commands.Storage where
 
 import qualified Data.Functor.Sum as Sum
-import qualified Data.Yaml as Yaml
+import qualified Data.Text as T
 
 import Application.Types.Base (Application, configFile)
-import Application.Commands.Base (liftFree, getContacts, getConfig)
-import Contacts (Contacts)
+import Application.Commands.Base (liftFree, getContacts, getConfig, putContacts)
 
+import qualified Application.Commands.UI as UI
 import qualified Application.Types.Storage as Storage
 
-readContacts :: Application (Either Yaml.ParseException Contacts)
-readContacts = getConfig >>= storageInputCommand . Storage.ReadContacts . configFile
+readContacts :: Application ()
+readContacts = do
+    config   <- getConfig
+    contacts <- storageInputCommand $ Storage.ReadContacts (configFile config)
+
+    case contacts of
+        Right cs  -> putContacts cs
+        Left  err -> do UI.displayMessage (T.pack (show err))
+                        UI.exit 1
 
 writeContacts :: Application ()
 writeContacts = do

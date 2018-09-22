@@ -10,8 +10,6 @@ module Application
 
 import Control.Monad (forever)
 
-import qualified Data.Text as T
-
 import Application.Types.Base
 import Application.Types.UI (Action(..))
 import Application.Commands.Base as App
@@ -23,13 +21,7 @@ import qualified Contacts
 main :: Application ()
 main = do
     UI.displayWelcomeBanner
-
-    contacts <- Storage.readContacts
-
-    case contacts of
-        Right cs  -> App.putContacts cs
-        Left err  -> do UI.displayMessage (T.pack (show err))
-                        UI.exit 1
+    Storage.readContacts
 
     forever mainLoop
 
