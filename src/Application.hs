@@ -100,5 +100,5 @@ storageInputCommand command = liftStorage (command id)
 liftStorage :: StorageCommand a -> Application a
 liftStorage = liftFree . InR
 
-liftFree :: Sum UICommand StorageCommand a -> Application
+liftFree :: Sum UICommand StorageCommand a -> Application a
 liftFree = lift . lift . liftF
