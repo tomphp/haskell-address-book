@@ -5,10 +5,10 @@ import Control.Monad.Reader (ReaderT)
 import Control.Monad.State (StateT)
 import Data.Functor.Sum (Sum(..))
 
+import Application.Types.State (State)
+
 import qualified Application.Types.Storage as Storage
 import qualified Application.Types.UI as UI
-
-import Contacts (Contacts)
 
 data Config = Config { configFile :: FilePath }
 
@@ -20,5 +20,5 @@ data Definition a = Definition
 
 type Program = Free (Sum UI.Command Storage.Command)
 
-type Application = StateT Contacts (ReaderT Config Program)
+type Application = StateT State (ReaderT Config Program)
 

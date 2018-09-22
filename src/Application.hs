@@ -37,7 +37,7 @@ doAction =
         ListContacts -> UI.displayContactList
         AddContact   -> addContact
         Save         -> saveContacts
-        Quit         -> UI.exit 0
+        Quit         -> quit
 
 addContact :: Application ()
 addContact = do
@@ -45,8 +45,18 @@ addContact = do
     contact  <- UI.getContact
 
     App.putContacts (Contacts.add contact contacts)
+    App.setUnsaved
 
 saveContacts :: Application ()
 saveContacts = do
     Storage.writeContacts
+    App.setSaved
     UI.displayMessage "Contacts saved."
+
+quit :: Application ()
+quit = do
+    unsaved <- App.hasUnsaved
+
+    if unsaved
+        then UI.displayMessage "Please save before quitting."
+        else UI.exit 0
