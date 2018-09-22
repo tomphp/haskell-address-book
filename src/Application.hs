@@ -26,12 +26,10 @@ main = do
     forever mainLoop
 
 mainLoop :: Application ()
-mainLoop = do
-    action <- UI.getAction
-
-    case action of
-       Just a  -> doAction a
-       Nothing -> UI.displayMessage "ERROR: Bad command"
+mainLoop =
+    UI.getAction >>= \case
+       Just action -> doAction action
+       Nothing     -> UI.displayMessage "ERROR: Bad command"
 
 doAction :: Action -> Application ()
 doAction =
