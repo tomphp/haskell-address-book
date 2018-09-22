@@ -5,7 +5,6 @@ module UI where
 import Data.Text (Text)
 import System.Exit (ExitCode(ExitFailure), exitWith, exitSuccess)
 
-import qualified Data.Text as T
 import qualified Data.Text.IO as IO
 
 import Application.Types.UI
@@ -59,10 +58,10 @@ printContact contact = do
 getContact :: IO Contact
 getContact = do
     IO.putStrLn "Enter Name:  "
-    name <- T.pack <$> getLine
+    name <- IO.getLine
 
     IO.putStrLn "Enter Number:"
-    number <- T.pack <$> getLine
+    number <- IO.getLine
 
     return $ Contact.new name number
 
