@@ -5,14 +5,14 @@ module UI where
 import qualified Data.Text as T
 import System.Exit (ExitCode(ExitFailure), exitWith, exitSuccess)
 
-import Types
+import Application.Types.UI
 import Contacts (Contacts)
 import Contact (Contact)
 
 import qualified Contacts
 import qualified Contact
 
-interpret :: UIInterpreter ()
+interpret :: Interpreter ()
 interpret (DisplayWelcomeBanner        x) = UI.printWelcomeBanner >> x
 interpret (DisplayMessage msg          x) = UI.printMessage msg >> x
 interpret (GetAction                   x) = UI.getAction >>= x

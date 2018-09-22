@@ -7,9 +7,9 @@ import qualified Data.ByteString.Char8 as C8
 import qualified Data.Yaml as Yaml
 
 import Contacts (Contacts)
-import Types
+import Application.Types.Storage
 
-interpret :: StorageInterpreter a
+interpret :: Interpreter a
 interpret (ReadContacts  path          x) = readContacts path >>= x
 interpret (WriteContacts path contacts x) = writeContacts path contacts >> x
 

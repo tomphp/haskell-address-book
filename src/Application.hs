@@ -1,104 +1,56 @@
+{-# LANGUAGE LambdaCase, OverloadedStrings #-}
+
 module Application
-    ( Application
-    , runApplication
-    , getConfig
-    , getAction
-    , getContacts
-    , putContacts
-    , printWelcomeBanner
-    , printMessage
-    , listContacts
-    , getContact
-    , readContacts
-    , writeContacts
-    , exit
+    ( module Application.Commands.Base
+    , module Application.Commands.Storage
+    , module Application.Commands.UI
+    , module Application.Types.Base
+    , main
     ) where
 
-import Control.Monad.Free (Free(..), iterM, liftF)
-import Control.Monad.Reader (ReaderT, runReaderT, ask, lift)
-import Control.Monad.State (StateT, runStateT, get, put)
+import Control.Monad (forever)
 
-import Data.Functor.Sum (Sum(..))
+import Application.Types.Base
+import Application.Types.UI (Action(..))
+import Application.Commands.Base
+import Application.Commands.Storage
+import Application.Commands.UI
 
-import qualified Data.Yaml as Yaml
+import qualified Contacts
 
-import Contacts (Contacts)
-import Contact (Contact)
-import Types
+main :: Application ()
+main = do
+    printWelcomeBanner
 
-type Program = Free (Sum UICommand StorageCommand)
+    contacts <- readContacts
 
-type Application = StateT Contacts (ReaderT Config Program)
+    case contacts of
+        Right cs  -> putContacts cs
+        Left err  -> do printMessage (show err)
+                        exit 1
 
-runApplication :: UIInterpreter () -> StorageInterpreter () -> Config -> Contacts -> Application () -> IO ()
-runApplication ui storage config contacts application =
-    interpret ui storage $ fst <$> runReaderT (runStateT application contacts) config
+    forever mainLoop
 
-interpret :: UIInterpreter a -> StorageInterpreter a -> Program a -> IO a
-interpret ui storage program =
-  iterM go program
-  where
-    go (InL cmd) = ui cmd
-    go (InR cmd) = storage cmd
+mainLoop :: Application ()
+mainLoop = do
+    action <- getAction
 
-getConfig :: Application Config
-getConfig = ask
+    case action of
+       Just a  -> doAction a
+       Nothing -> printMessage "ERROR: Bad command"
 
-getContacts :: Application Contacts
-getContacts = get
+doAction :: Action -> Application ()
+doAction =
+    \case
+        ListContacts -> listContacts
+        AddContact   -> addContact
+        Quit         -> exit 0
 
-putContacts :: Contacts -> Application ()
-putContacts = put
-
--- UI Freeness
-
-printWelcomeBanner :: Application ()
-printWelcomeBanner = uiOutputCommand DisplayWelcomeBanner
-
-printMessage :: String -> Application ()
-printMessage message = uiOutputCommand (DisplayMessage message)
-
-getAction :: Application (Maybe Action)
-getAction = uiInputCommand GetAction
-
-listContacts :: Application ()
-listContacts = getContacts >>= uiOutputCommand . DisplayContactList
-
-getContact :: Application Contact
-getContact = uiInputCommand GetContact
-
-exit :: Int -> Application ()
-exit code = liftUI (Exit code)
-
-uiOutputCommand :: (() -> UICommand a) -> Application a
-uiOutputCommand command = liftUI (command ())
-
-uiInputCommand :: ((a -> a) -> UICommand b) -> Application b
-uiInputCommand command = liftUI (command id)
-
-liftUI :: UICommand a -> Application a
-liftUI = liftFree . InL
-
--- Storage Freeness
-
-readContacts :: Application (Either Yaml.ParseException Contacts)
-readContacts = getConfig >>= storageInputCommand . ReadContacts . configFile
-
-writeContacts :: Application ()
-writeContacts = do
-    config   <- getConfig
+addContact :: Application ()
+addContact = do
     contacts <- getContacts
+    contact  <- getContact
 
-    storageOutputCommand (WriteContacts (configFile config) contacts)
+    putContacts (Contacts.add contact contacts)
 
-storageOutputCommand :: (() -> StorageCommand a) -> Application a
-storageOutputCommand command = liftStorage (command ())
-
-storageInputCommand :: ((a -> a) -> StorageCommand b) -> Application b
-storageInputCommand command = liftStorage (command id)
-
-liftStorage :: StorageCommand a -> Application a
-liftStorage = liftFree . InR
-
-liftFree :: Sum UICommand StorageCommand a -> Application a
-liftFree = lift . lift . liftF
+    writeContacts
