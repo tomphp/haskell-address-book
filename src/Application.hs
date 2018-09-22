@@ -22,13 +22,13 @@ import qualified Contacts
 
 main :: Application ()
 main = do
-    UI.printWelcomeBanner
+    UI.displayWelcomeBanner
 
     contacts <- Storage.readContacts
 
     case contacts of
         Right cs  -> App.putContacts cs
-        Left err  -> do UI.printMessage (T.pack (show err))
+        Left err  -> do UI.displayMessage (T.pack (show err))
                         UI.exit 1
 
     forever mainLoop
@@ -39,12 +39,12 @@ mainLoop = do
 
     case action of
        Just a  -> doAction a
-       Nothing -> UI.printMessage "ERROR: Bad command"
+       Nothing -> UI.displayMessage "ERROR: Bad command"
 
 doAction :: Action -> Application ()
 doAction =
     \case
-        ListContacts -> UI.listContacts
+        ListContacts -> UI.displayContactList
         AddContact   -> addContact
         Quit         -> UI.exit 0
 
@@ -53,6 +53,6 @@ addContact = do
     contacts <- App.getContacts
     contact  <- UI.getContact
 
-    putContacts (Contacts.add contact contacts)
+    App.putContacts (Contacts.add contact contacts)
 
     Storage.writeContacts

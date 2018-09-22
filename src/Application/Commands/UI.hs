@@ -1,4 +1,11 @@
-module Application.Commands.UI where
+module Application.Commands.UI
+    ( displayWelcomeBanner
+    , displayMessage
+    , displayContactList
+    , getAction
+    , getContact
+    , exit
+    ) where
 
 import Data.Text (Text)
 import qualified Data.Functor.Sum as Sum
@@ -9,17 +16,17 @@ import Contact (Contact)
 
 import qualified Application.Types.UI as UI
 
-printWelcomeBanner :: Application ()
-printWelcomeBanner = uiOutputCommand UI.DisplayWelcomeBanner
+displayWelcomeBanner :: Application ()
+displayWelcomeBanner = uiOutputCommand UI.DisplayWelcomeBanner
 
-printMessage :: Text -> Application ()
-printMessage message = uiOutputCommand (UI.DisplayMessage message)
+displayMessage :: Text -> Application ()
+displayMessage message = uiOutputCommand (UI.DisplayMessage message)
+
+displayContactList :: Application ()
+displayContactList = getContacts >>= uiOutputCommand . UI.DisplayContactList
 
 getAction :: Application (Maybe UI.Action)
 getAction = uiInputCommand UI.GetAction
-
-listContacts :: Application ()
-listContacts = getContacts >>= uiOutputCommand . UI.DisplayContactList
 
 getContact :: Application Contact
 getContact = uiInputCommand UI.GetContact
