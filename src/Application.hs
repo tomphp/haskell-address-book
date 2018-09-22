@@ -10,6 +10,8 @@ module Application
 
 import Control.Monad (forever)
 
+import qualified Data.Text as T
+
 import Application.Types.Base
 import Application.Types.UI (Action(..))
 import Application.Commands.Base as App
@@ -26,7 +28,7 @@ main = do
 
     case contacts of
         Right cs  -> App.putContacts cs
-        Left err  -> do UI.printMessage (show err)
+        Left err  -> do UI.printMessage (T.pack (show err))
                         UI.exit 1
 
     forever mainLoop

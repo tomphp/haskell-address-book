@@ -1,9 +1,12 @@
-{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE OverloadedStrings, LambdaCase #-}
 
 module UI where
 
-import qualified Data.Text as T
+import Data.Text (Text)
 import System.Exit (ExitCode(ExitFailure), exitWith, exitSuccess)
+
+import qualified Data.Text as T
+import qualified Data.Text.IO as IO
 
 import Application.Types.UI
 import Contacts (Contacts)
@@ -22,19 +25,19 @@ interpret (Exit code)                     = exit code
 
 printWelcomeBanner :: IO ()
 printWelcomeBanner = do
-    putStrLn "=================================================================="
-    putStrLn "=== Welcome to the Haskell Phone Book                          ==="
-    putStrLn "=================================================================="
+    IO.putStrLn "=================================================================="
+    IO.putStrLn "=== Welcome to the Haskell Phone Book                          ==="
+    IO.putStrLn "=================================================================="
 
-printMessage :: String -> IO ()
-printMessage msg = putStrLn $ ">>> " ++ msg
+printMessage :: Text -> IO ()
+printMessage msg = IO.putStrLn $ ">>> " <> msg
 
 getAction :: IO (Maybe Action)
 getAction = do
     printCommandList
-    actionFromString <$> getLine
+    actionFromString <$> IO.getLine
 
-actionFromString :: String -> Maybe Action
+actionFromString :: Text -> Maybe Action
 actionFromString =
     \case
         "l" -> Just ListContacts
@@ -48,31 +51,31 @@ listContacts contacts =
 
 printContact :: Contact -> IO ()
 printContact contact = do
-    putStrLn $ "Name:   " ++ T.unpack (Contact.name contact)
-    putStrLn $ "Number: " ++ T.unpack (Contact.number contact)
-    putStrLn "---"
+    IO.putStrLn $ "Name:   " <> Contact.name contact
+    IO.putStrLn $ "Number: " <> Contact.number contact
+    IO.putStrLn "---"
 
 getContact :: IO Contact
 getContact = do
-    putStrLn "Enter Name:  "
+    IO.putStrLn "Enter Name:  "
     name <- T.pack <$> getLine
 
-    putStrLn "Enter Number:"
+    IO.putStrLn "Enter Number:"
     number <- T.pack <$> getLine
 
     return $ Contact.new name number
 
 printCommandList :: IO ()
 printCommandList = do
-    putStrLn "+-|Commands|-----------------------------------------------------+"
-    putStrLn "| l  List contacts                                               |"
-    putStrLn "| a  Add contact                                                 |"
-    putStrLn "| q  Add contact                                                 |"
-    putStrLn "+----------------------------------------------------------------+"
+    IO.putStrLn "+-|Commands|-----------------------------------------------------+"
+    IO.putStrLn "| l  List contacts                                               |"
+    IO.putStrLn "| a  Add contact                                                 |"
+    IO.putStrLn "| q  Add contact                                                 |"
+    IO.putStrLn "+----------------------------------------------------------------+"
 
 exit :: Int -> IO ()
 exit code = do
-    putStrLn "Exiting"
+    IO.putStrLn "Exiting"
     case code of
          0 -> exitSuccess
          _ -> exitWith (ExitFailure code)

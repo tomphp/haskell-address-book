@@ -3,7 +3,10 @@ module File
     ) where
 
 import Control.Monad ((>=>))
-import qualified Data.ByteString.Char8 as C8
+import Data.Text (Text)
+
+import qualified Data.Text.IO as IO
+import qualified Data.Text.Encoding as Encoding
 import qualified Data.Yaml as Yaml
 
 import Contacts (Contacts)
@@ -13,16 +16,16 @@ interpret :: Interpreter a
 interpret (ReadContacts  path          x) = readContacts path >>= x
 interpret (WriteContacts path contacts x) = writeContacts path contacts >> x
 
-readContacts :: String -> IO (Either Yaml.ParseException Contacts)
+readContacts :: FilePath -> IO (Either Yaml.ParseException Contacts)
 readContacts =
-    readFile >=> return . decodeContacts
+    IO.readFile >=> return . decodeContacts
 
-writeContacts :: String -> Contacts -> IO ()
+writeContacts :: FilePath -> Contacts -> IO ()
 writeContacts path =
-   writeFile path . encodeContacts
+    IO.writeFile path . encodeContacts
 
-decodeContacts :: String -> Either Yaml.ParseException Contacts
-decodeContacts = Yaml.decodeEither' . C8.pack
+decodeContacts :: Text -> Either Yaml.ParseException Contacts
+decodeContacts = Yaml.decodeEither' . Encoding.encodeUtf8
 
-encodeContacts :: Contacts -> String
-encodeContacts = C8.unpack . Yaml.encode
+encodeContacts :: Contacts -> Text
+encodeContacts = Encoding.decodeUtf8 . Yaml.encode

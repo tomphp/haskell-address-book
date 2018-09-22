@@ -8,5 +8,5 @@ import Contacts (Contacts)
 
 type Interpreter a = Command (IO a) -> IO a
 
-data Command next = ReadContacts String (Either Yaml.ParseException Contacts -> next)
-                  | WriteContacts String Contacts next deriving (Functor)
+data Command next = ReadContacts FilePath (Either Yaml.ParseException Contacts -> next)
+                  | WriteContacts FilePath Contacts next deriving (Functor)

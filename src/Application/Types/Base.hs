@@ -10,7 +10,7 @@ import qualified Application.Types.UI as UI
 
 import Contacts (Contacts)
 
-data Config = Config { configFile :: String }
+data Config = Config { configFile :: FilePath }
 
 type Program = Free (Sum UI.Command Storage.Command)
 

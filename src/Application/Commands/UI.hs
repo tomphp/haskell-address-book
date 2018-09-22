@@ -1,6 +1,7 @@
 module Application.Commands.UI where
 
-import Data.Functor.Sum (Sum(..))
+import Data.Text (Text)
+import qualified Data.Functor.Sum as Sum
 
 import Application.Types.Base (Application)
 import Application.Commands.Base (liftFree, getContacts)
@@ -11,7 +12,7 @@ import qualified Application.Types.UI as UI
 printWelcomeBanner :: Application ()
 printWelcomeBanner = uiOutputCommand UI.DisplayWelcomeBanner
 
-printMessage :: String -> Application ()
+printMessage :: Text -> Application ()
 printMessage message = uiOutputCommand (UI.DisplayMessage message)
 
 getAction :: Application (Maybe UI.Action)
@@ -33,4 +34,4 @@ uiInputCommand :: ((a -> a) -> UI.Command b) -> Application b
 uiInputCommand command = liftUI (command id)
 
 liftUI :: UI.Command a -> Application a
-liftUI = liftFree . InL
+liftUI = liftFree . Sum.InL
