@@ -14,7 +14,7 @@ module Application
     , exit
     ) where
 
-import Control.Monad.Free (Free(..))
+import Control.Monad.Free (Free(..), liftF)
 import Control.Monad.Reader (ReaderT, runReaderT, ask, lift)
 import Control.Monad.State (StateT, runStateT, get, put)
 
@@ -69,11 +69,11 @@ writeContacts = do
 exit :: Int -> Application ()
 exit code = liftFree $ Free (Exit code)
 
-outputCommand :: (Free f () -> Command (Free Command a)) -> Application a
-outputCommand command = liftFree $ Free (command (Pure ()))
+outputCommand :: (() -> Command a) -> Application a
+outputCommand command = liftFree $ liftF (command ())
 
-inputCommand :: ((a -> Free f a) -> Command (Free Command b)) -> Application b
-inputCommand command = liftFree $ Free (command Pure)
+inputCommand :: ((a -> a) -> Command b) -> Application b
+inputCommand command = liftFree $ liftF (command id)
 
 liftFree :: Free Command a -> Application a
 liftFree = lift . lift

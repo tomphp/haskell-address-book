@@ -3,12 +3,11 @@
 module ApplicationMain (application) where
 
 import Control.Monad (forever)
-import System.Environment (getArgs)
 
 import qualified Contacts
 
 import qualified Application
-import Application (Application, runApplication)
+import Application (Application)
 import Types
 
 -- ApplicationMain
