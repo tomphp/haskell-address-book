@@ -27,9 +27,9 @@ interpret (Pure _)                               = exitSuccess
 
 printWelcomeBanner :: IO ()
 printWelcomeBanner = do
-    putStrLn "========================================="
-    putStrLn "=== Welcome to the Haskell Phone Book ==="
-    putStrLn "========================================="
+    putStrLn "=================================================================="
+    putStrLn "=== Welcome to the Haskell Phone Book                          ==="
+    putStrLn "=================================================================="
 
 printMessage :: String -> IO ()
 printMessage msg = putStrLn $ ">>> " ++ msg
@@ -59,7 +59,7 @@ printContact contact = do
 
 getContact :: IO Contact
 getContact = do
-    putStrLn "Enter Name:"
+    putStrLn "Enter Name:  "
     name <- T.pack <$> getLine
 
     putStrLn "Enter Number:"
@@ -69,11 +69,11 @@ getContact = do
 
 printCommandList :: IO ()
 printCommandList = do
-    putStrLn "+-|Commands|-------+"
-    putStrLn "| l  List contacts |"
-    putStrLn "| a  Add contact   |"
-    putStrLn "| q  Add contact   |"
-    putStrLn "+------------------+"
+    putStrLn "+-|Commands|-----------------------------------------------------+"
+    putStrLn "| l  List contacts                                               |"
+    putStrLn "| a  Add contact                                                 |"
+    putStrLn "| q  Add contact                                                 |"
+    putStrLn "+----------------------------------------------------------------+"
 
 exit :: Int -> IO ()
 exit code = do
