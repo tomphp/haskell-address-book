@@ -10,14 +10,17 @@ import qualified ApplicationMain
 import Application (runApplication)
 import Types
 import qualified UI
-
--- ApplicationMain
+import qualified File
 
 main :: IO ()
 main = do
-    putStrLn ""
     config  <- loadConfig
-    runApplication UI.interpret config Contacts.new ApplicationMain.application
+
+    runApplication UI.interpret
+                   File.interpret
+                   config
+                   Contacts.new
+                   ApplicationMain.application
 
 loadConfig :: IO Config
 loadConfig = do

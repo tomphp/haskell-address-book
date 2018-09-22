@@ -2,7 +2,6 @@
 
 module UI where
 
-import Control.Monad.Free (Free(..))
 import qualified Data.Text as T
 import System.Exit (ExitCode(ExitFailure), exitWith, exitSuccess)
 
@@ -10,20 +9,16 @@ import Types
 import Contacts (Contacts)
 import Contact (Contact)
 
-import qualified File
 import qualified Contacts
 import qualified Contact
 
-interpret :: Interpreter
-interpret (Free (DisplayWelcomeBanner        x)) = UI.printWelcomeBanner >> interpret x
-interpret (Free (DisplayMessage msg          x)) = UI.printMessage msg >> interpret x
-interpret (Free (GetAction                   x)) = UI.getAction >>= interpret . x
-interpret (Free (DisplayContactList contacts x)) = UI.listContacts contacts >> interpret x
-interpret (Free (GetContact                  x)) = UI.getContact >>= interpret . x
-interpret (Free (ReadContacts  path          x)) = File.readContacts path >>= interpret . x
-interpret (Free (WriteContacts path contacts x)) = File.writeContacts path contacts >> interpret x
-interpret (Free (Exit code)                    ) = exit code
-interpret (Pure _)                               = exitSuccess
+interpret :: UIInterpreter ()
+interpret (DisplayWelcomeBanner        x) = UI.printWelcomeBanner >> x
+interpret (DisplayMessage msg          x) = UI.printMessage msg >> x
+interpret (GetAction                   x) = UI.getAction >>= x
+interpret (DisplayContactList contacts x) = UI.listContacts contacts >> x
+interpret (GetContact                  x) = UI.getContact >>= x
+interpret (Exit code)                     = exit code
 
 printWelcomeBanner :: IO ()
 printWelcomeBanner = do

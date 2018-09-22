@@ -10,8 +10,6 @@ import qualified Application
 import Application (Application)
 import Types
 
--- ApplicationMain
-
 application :: Application ()
 application = do
     Application.printWelcomeBanner

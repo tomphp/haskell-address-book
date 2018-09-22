@@ -1,6 +1,5 @@
 module File
-    ( readContacts
-    , writeContacts
+    ( interpret
     ) where
 
 import Control.Monad ((>=>))
@@ -8,6 +7,11 @@ import qualified Data.ByteString.Char8 as C8
 import qualified Data.Yaml as Yaml
 
 import Contacts (Contacts)
+import Types
+
+interpret :: StorageInterpreter a
+interpret (ReadContacts  path          x) = readContacts path >>= x
+interpret (WriteContacts path contacts x) = writeContacts path contacts >> x
 
 readContacts :: String -> IO (Either Yaml.ParseException Contacts)
 readContacts =
