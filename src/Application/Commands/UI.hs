@@ -26,7 +26,7 @@ displayMessage message = uiOutputCommand (UI.DisplayMessage message)
 displayContactList :: Application ()
 displayContactList = App.getContacts >>= uiOutputCommand . UI.DisplayContactList
 
-getAction :: Application (Maybe UI.Action)
+getAction :: Application UI.Action
 getAction = uiInputCommand UI.GetAction
 
 getContact :: Application Contact

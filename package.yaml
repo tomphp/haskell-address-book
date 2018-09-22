@@ -41,6 +41,7 @@ executables:
     - -Wall
     dependencies:
     - address-book
+    - monad-loops
 
 tests:
   address-book-test:
@@ -50,5 +51,8 @@ tests:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    - -Wall
+    - -Werror
     dependencies:
     - address-book
+    - hspec

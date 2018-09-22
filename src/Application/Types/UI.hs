@@ -13,7 +13,7 @@ type Interpreter a = Command (IO a) -> IO a
 
 data Command next = DisplayWelcomeBanner next
                   | DisplayMessage Text next
-                  | GetAction (Maybe Action -> next)
+                  | GetAction (Action -> next)
                   | DisplayContactList Contacts next
                   | GetContact (Contact -> next)
                   | Exit Int deriving (Functor)

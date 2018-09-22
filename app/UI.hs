@@ -2,6 +2,7 @@
 
 module UI where
 
+import Control.Monad.Loops (untilJust)
 import Data.Text (Text)
 import System.Exit (ExitCode(ExitFailure), exitWith, exitSuccess)
 
@@ -31,10 +32,16 @@ printWelcomeBanner = do
 printMessage :: Text -> IO ()
 printMessage msg = IO.putStrLn $ ">>> " <> msg
 
-getAction :: IO (Maybe Action)
-getAction = do
-    printCommandList
-    actionFromString <$> IO.getLine
+getAction :: IO Action
+getAction =
+    untilJust $ do
+        printCommandList
+
+        input <- IO.getLine
+
+        case actionFromString input of
+            Just action -> return $ Just action
+            Nothing     -> printMessage "Bad command," >> return Nothing
 
 actionFromString :: Text -> Maybe Action
 actionFromString =
@@ -56,14 +63,17 @@ printContact contact = do
     IO.putStrLn "---"
 
 getContact :: IO Contact
-getContact = do
-    IO.putStrLn "Enter Name:  "
-    name <- IO.getLine
+getContact =
+    untilJust $ do
+        IO.putStrLn "Enter Name:  "
+        name <- IO.getLine
 
-    IO.putStrLn "Enter Number:"
-    number <- IO.getLine
+        IO.putStrLn "Enter Number:"
+        number <- IO.getLine
 
-    return $ Contact.new name number
+        case Contact.new name number of
+            Right contact -> return $ Just contact
+            Left  msg     -> printMessage msg >> return Nothing
 
 printCommandList :: IO ()
 printCommandList = do
