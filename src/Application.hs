@@ -7,10 +7,10 @@ module Application
     )
 where
 
-import Control.Monad (forever)
+import Control.Monad (forever, when)
 
 import Application.Types.Base
-import Application.Types.UI (Action(..))
+import Application.Types.UI (Action(..), Choice(..))
 import Application.Commands.Base as App
 
 import qualified Application.Commands.Storage as Storage
@@ -54,6 +54,16 @@ quit :: Application ()
 quit = do
     unsaved <- App.hasUnsaved
 
-    if unsaved
-        then UI.displayMessage "Please save before quitting."
-        else UI.exit 0
+    when unsaved promptForSave
+
+    UI.exit 0
+
+promptForSave :: Application ()
+promptForSave = do
+    save <- UI.getChoice "Do you want to save changes?"
+
+    when (isYes save) saveContacts
+
+isYes :: Choice -> Bool
+isYes Yes = True
+isYes No  = False

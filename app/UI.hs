@@ -18,8 +18,9 @@ import qualified Contact
 interpret :: Interpreter ()
 interpret (DisplayWelcomeBanner        x) = UI.printWelcomeBanner >> x
 interpret (DisplayMessage msg          x) = UI.printMessage msg >> x
-interpret (GetAction                   x) = UI.getAction >>= x
 interpret (DisplayContactList contacts x) = UI.listContacts contacts >> x
+interpret (GetChoice msg               x) = UI.getChoice msg >>= x
+interpret (GetAction                   x) = UI.getAction >>= x
 interpret (GetContact                  x) = UI.getContact >>= x
 interpret (Exit code)                     = exit code
 
@@ -37,10 +38,10 @@ getAction =
     untilRight $ do
         printCommandList
 
-        actionFromString <$> IO.getLine
+        textToAction <$> IO.getLine
 
-actionFromString :: Text -> Either Text Action
-actionFromString =
+textToAction :: Text -> Either Text Action
+textToAction =
     \case
         "l" -> Right ListContacts
         "a" -> Right AddContact
@@ -57,6 +58,19 @@ printContact contact = do
     IO.putStrLn $ "Name:   " <> Contact.name contact
     IO.putStrLn $ "Number: " <> Contact.number contact
     IO.putStrLn "---"
+
+getChoice :: Text -> IO Choice
+getChoice msg = do
+    IO.putStrLn $ msg <> " (y/n)"
+
+    untilRight $ textToChoice <$> IO.getLine
+
+textToChoice :: Text -> Either Text Choice
+textToChoice =
+    \case
+        "y" -> Right Yes
+        "n" -> Right No
+        _   -> Left "Please enter y or n"
 
 getContact :: IO Contact
 getContact =

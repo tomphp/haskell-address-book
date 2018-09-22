@@ -7,13 +7,16 @@ import Data.Text (Text)
 import Contact (Contact)
 import Contacts (Contacts)
 
+data Choice = Yes | No
+
 data Action = ListContacts | AddContact | Save | Quit
 
 type Interpreter a = Command (IO a) -> IO a
 
 data Command next = DisplayWelcomeBanner next
                   | DisplayMessage Text next
-                  | GetAction (Action -> next)
                   | DisplayContactList Contacts next
+                  | GetChoice Text (Choice -> next)
+                  | GetAction (Action -> next)
                   | GetContact (Contact -> next)
                   | Exit Int deriving (Functor)

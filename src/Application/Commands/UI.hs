@@ -2,6 +2,7 @@ module Application.Commands.UI
     ( displayWelcomeBanner
     , displayMessage
     , displayContactList
+    , getChoice
     , getAction
     , getContact
     , exit
@@ -28,6 +29,9 @@ displayContactList = App.getContacts >>= uiOutputCommand . UI.DisplayContactList
 
 getAction :: Application UI.Action
 getAction = uiInputCommand UI.GetAction
+
+getChoice :: Text -> Application UI.Choice
+getChoice msg = uiInputCommand $ UI.GetChoice msg
 
 getContact :: Application Contact
 getContact = uiInputCommand UI.GetContact
