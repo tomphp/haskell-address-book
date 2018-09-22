@@ -5,7 +5,8 @@ module Contact
     , new
     , name
     , number
-    ) where
+    )
+where
 
 import Data.Text (Text)
 import qualified Data.Yaml as Yaml

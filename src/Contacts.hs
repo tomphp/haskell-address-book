@@ -1,10 +1,12 @@
 {-# LANGUAGE DeriveGeneric #-}
+
 module Contacts
     ( Contacts
     , new
     , add
     , foreach
-    ) where
+    )
+where
 
 import Control.Monad (forM_)
 import qualified Data.Yaml as Yaml

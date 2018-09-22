@@ -6,7 +6,8 @@ module Application.Types.State
     , hasUnsaved
     , setSaved
     , setUnsaved
-    ) where
+    )
+where
 
 import Contacts (Contacts)
 

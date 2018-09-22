@@ -12,10 +12,11 @@ main :: IO ()
 main = do
     config  <- loadConfig
 
-    let appDef = App.Definition { App.userInterface = UI.interpret
-                                , App.storageSystem = File.interpret
-                                , App.config        = config
-                                }
+    let appDef = App.Definition
+                    { App.userInterface = UI.interpret
+                    , App.storageSystem = File.interpret
+                    , App.config        = config
+                    }
 
     App.run appDef App.main
 

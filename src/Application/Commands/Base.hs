@@ -7,7 +7,8 @@ module Application.Commands.Base
     , setUnsaved
     , hasUnsaved
     , liftFree
-    ) where
+    )
+where
 
 import Control.Monad.Free (liftF, iterM)
 import Control.Monad.Reader (runReaderT, ask)

@@ -1,6 +1,4 @@
-module File
-    ( interpret
-    ) where
+module File (interpret) where
 
 import Control.Monad ((>=>))
 import Data.Text (Text)

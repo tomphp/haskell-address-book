@@ -5,7 +5,8 @@ module Application.Commands.UI
     , getAction
     , getContact
     , exit
-    ) where
+    )
+where
 
 import Data.Text (Text)
 import qualified Data.Functor.Sum as Sum

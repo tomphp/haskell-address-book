@@ -2,11 +2,10 @@
 
 module Application
     ( module App
-    , module Storage
-    , module UI
     , module Application.Types.Base
     , main
-    ) where
+    )
+where
 
 import Control.Monad (forever)
 
