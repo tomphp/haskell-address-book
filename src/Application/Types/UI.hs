@@ -7,7 +7,7 @@ import Data.Text (Text)
 import Contact (Contact)
 import Contacts (Contacts)
 
-data Action = ListContacts | AddContact | Quit
+data Action = ListContacts | AddContact | Save | Quit
 
 type Interpreter a = Command (IO a) -> IO a
 

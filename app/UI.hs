@@ -42,6 +42,7 @@ actionFromString =
     \case
         "l" -> Just ListContacts
         "a" -> Just AddContact
+        "s" -> Just Save
         "q" -> Just Quit
         _   -> Nothing
 
@@ -70,7 +71,8 @@ printCommandList = do
     IO.putStrLn "+-|Commands|-----------------------------------------------------+"
     IO.putStrLn "| l  List contacts                                               |"
     IO.putStrLn "| a  Add contact                                                 |"
-    IO.putStrLn "| q  Add contact                                                 |"
+    IO.putStrLn "| s  Save contacts                                               |"
+    IO.putStrLn "| q  Quit                                                        |"
     IO.putStrLn "+----------------------------------------------------------------+"
 
 exit :: Int -> IO ()

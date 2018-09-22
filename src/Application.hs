@@ -46,6 +46,7 @@ doAction =
     \case
         ListContacts -> UI.displayContactList
         AddContact   -> addContact
+        Save         -> saveContacts
         Quit         -> UI.exit 0
 
 addContact :: Application ()
@@ -55,4 +56,7 @@ addContact = do
 
     App.putContacts (Contacts.add contact contacts)
 
+saveContacts :: Application ()
+saveContacts = do
     Storage.writeContacts
+    UI.displayMessage "Contacts saved."
