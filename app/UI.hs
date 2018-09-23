@@ -16,12 +16,12 @@ import qualified Contacts
 import qualified Contact
 
 interpret :: Interpreter ()
-interpret (DisplayWelcomeBanner        x) = UI.printWelcomeBanner >> x
-interpret (DisplayMessage msg          x) = UI.printMessage msg >> x
-interpret (DisplayContactList contacts x) = UI.listContacts contacts >> x
-interpret (GetChoice msg               x) = UI.getChoice msg >>= x
-interpret (GetAction                   x) = UI.getAction >>= x
-interpret (GetContact                  x) = UI.getContact >>= x
+interpret (DisplayWelcomeBanner        x) = printWelcomeBanner >> x
+interpret (DisplayMessage msg          x) = printMessage msg >> x
+interpret (DisplayContactList contacts x) = listContacts contacts >> x
+interpret (GetChoice msg               x) = getChoice msg >>= x
+interpret (GetAction                   x) = getAction >>= x
+interpret (GetContact                  x) = getContact >>= x
 interpret (Exit code)                     = exit code
 
 printWelcomeBanner :: IO ()
