@@ -14,13 +14,21 @@ interpret :: Interpreter a
 interpret (ReadContacts  path          x) = readContacts path >>= x
 interpret (WriteContacts path contacts x) = writeContacts path contacts >> x
 
-readContacts :: FilePath -> IO (Either Yaml.ParseException Contacts)
-readContacts =
-    IO.readFile >=> return . decodeContacts
+class Monad m => FileAccess m where
+    readFromFile :: FilePath -> m Text
+    writeToFile :: FilePath -> Text -> m ()
 
-writeContacts :: FilePath -> Contacts -> IO ()
+instance FileAccess IO where
+    readFromFile = IO.readFile
+    writeToFile = IO.writeFile
+
+readContacts :: FileAccess m => FilePath -> m (Either Yaml.ParseException Contacts)
+readContacts =
+    readFromFile >=> return . decodeContacts
+
+writeContacts :: FileAccess m => FilePath -> Contacts -> m ()
 writeContacts path =
-    IO.writeFile path . encodeContacts
+    writeToFile path . encodeContacts
 
 decodeContacts :: Text -> Either Yaml.ParseException Contacts
 decodeContacts = Yaml.decodeEither' . Encoding.encodeUtf8
