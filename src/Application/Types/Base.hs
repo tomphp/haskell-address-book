@@ -1,3 +1,5 @@
+{-# LANGUAGE RankNTypes #-}
+
 module Application.Types.Base where
 
 import Control.Monad.Free (Free(..))
@@ -21,4 +23,3 @@ data Definition a = Definition
 type Program = Free (Sum UI.Command Storage.Command)
 
 type Application = StateT State (ReaderT Config Program)
-

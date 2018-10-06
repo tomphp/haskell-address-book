@@ -24,21 +24,33 @@ interpret (GetAction                   x) = getAction >>= x
 interpret (GetContact                  x) = getContact >>= x
 interpret (Exit code)                     = exit code
 
-printWelcomeBanner :: IO ()
+class Monad m => Console m where
+    outputLine :: Text -> m ()
+    readLine :: m Text
+    exitProgram :: Int -> m ()
+
+instance Console IO where
+    outputLine = IO.putStrLn
+    readLine = IO.getLine
+    exitProgram code = case code of
+                        0 -> exitSuccess
+                        _ -> exitWith (ExitFailure code)
+
+printWelcomeBanner :: Console m => m ()
 printWelcomeBanner = do
-    IO.putStrLn "=================================================================="
-    IO.putStrLn "=== Welcome to the Haskell Phone Book                          ==="
-    IO.putStrLn "=================================================================="
+    outputLine "=================================================================="
+    outputLine "=== Welcome to the Haskell Phone Book                          ==="
+    outputLine "=================================================================="
 
-printMessage :: Text -> IO ()
-printMessage msg = IO.putStrLn $ ">>> " <> msg
+printMessage :: Console m => Text -> m ()
+printMessage msg = outputLine $ ">>> " <> msg
 
-getAction :: IO Action
+getAction :: Console m => m Action
 getAction =
     untilRight $ do
         printCommandList
 
-        textToAction <$> IO.getLine
+        textToAction <$> readLine
 
 textToAction :: Text -> Either Text Action
 textToAction =
@@ -49,21 +61,21 @@ textToAction =
         "q" -> Right Quit
         _   -> Left "Bad command."
 
-listContacts :: Contacts -> IO ()
+listContacts :: Console m => Contacts -> m ()
 listContacts contacts =
     Contacts.foreach contacts printContact
 
-printContact :: Contact -> IO ()
+printContact :: Console m => Contact -> m ()
 printContact contact = do
-    IO.putStrLn $ "Name:   " <> Contact.name contact
-    IO.putStrLn $ "Number: " <> Contact.number contact
-    IO.putStrLn "---"
+    outputLine $ "Name:   " <> Contact.name contact
+    outputLine $ "Number: " <> Contact.number contact
+    outputLine "---"
 
-getChoice :: Text -> IO Choice
+getChoice :: Console m => Text -> m Choice
 getChoice msg = do
-    IO.putStrLn $ msg <> " (y/n)"
+    outputLine $ msg <> " (y/n)"
 
-    untilRight $ textToChoice <$> IO.getLine
+    untilRight $ textToChoice <$> readLine
 
 textToChoice :: Text -> Either Text Choice
 textToChoice =
@@ -72,34 +84,30 @@ textToChoice =
         "n" -> Right No
         _   -> Left "Please enter y or n"
 
-getContact :: IO Contact
+getContact :: Console m => m Contact
 getContact =
     untilRight $ do
-        IO.putStrLn "Enter Name:  "
-        name <- IO.getLine
+        outputLine "Enter Name:  "
+        name <- readLine
 
-        IO.putStrLn "Enter Number:"
-        number <- IO.getLine
+        outputLine "Enter Number:"
+        number <- readLine
 
         return $ Contact.new name number
 
-printCommandList :: IO ()
+printCommandList :: Console m => m ()
 printCommandList = do
-    IO.putStrLn "+-|Commands|-----------------------------------------------------+"
-    IO.putStrLn "| l  List contacts                                               |"
-    IO.putStrLn "| a  Add contact                                                 |"
-    IO.putStrLn "| s  Save contacts                                               |"
-    IO.putStrLn "| q  Quit                                                        |"
-    IO.putStrLn "+----------------------------------------------------------------+"
+    outputLine "+-|Commands|-----------------------------------------------------+"
+    outputLine "| l  List contacts                                               |"
+    outputLine "| a  Add contact                                                 |"
+    outputLine "| s  Save contacts                                               |"
+    outputLine "| q  Quit                                                        |"
+    outputLine "+----------------------------------------------------------------+"
 
-exit :: Int -> IO ()
-exit code = do
-    IO.putStrLn "Exiting"
-    case code of
-         0 -> exitSuccess
-         _ -> exitWith (ExitFailure code)
+exit :: Console m => Int -> m ()
+exit code = outputLine "Exiting" >> exitProgram code
 
-untilRight :: IO (Either Text a) -> IO a
+untilRight :: Console m => m (Either Text a) -> m a
 untilRight action =
     untilJust $ do
         result <- action
