@@ -1,6 +1,8 @@
-{-# LANGUAGE DeriveGeneric, OverloadedStrings, RecordWildCards #-}
+{-# LANGUAGE DeriveGeneric     #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RecordWildCards   #-}
 
-module Contact
+module Domain.Contact
     ( Contact
     , new
     , name

@@ -23,6 +23,7 @@ dependencies:
 - base >= 4.7 && < 5
 - bytestring
 - free
+- monad-loops
 - mtl
 - text
 - yaml
@@ -39,9 +40,11 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     - -Wall
+    - -Werror
+    - -Wunused-imports
+    - -Werror=unused-imports
     dependencies:
     - address-book
-    - monad-loops
 
 tests:
   address-book-test:

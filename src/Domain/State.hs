@@ -1,4 +1,4 @@
-module Application.Types.State
+module Domain.State
     ( State
     , new
     , getContacts
@@ -9,11 +9,9 @@ module Application.Types.State
     )
 where
 
-import Contacts (Contacts)
+import qualified Domain.Contacts as Contacts
 
-import qualified Contacts
-
-data State = State { getContacts :: Contacts
+data State = State { getContacts :: Contacts.Contacts
                    , hasUnsaved  :: Bool
                    }
 
@@ -26,5 +24,5 @@ setUnsaved state = state { hasUnsaved = True }
 setSaved :: State -> State
 setSaved state = state { hasUnsaved = False }
 
-setContacts :: Contacts -> State -> State
+setContacts :: Contacts.Contacts -> State -> State
 setContacts contacts state = state { getContacts = contacts }

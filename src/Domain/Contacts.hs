@@ -1,6 +1,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 
-module Contacts
+module Domain.Contacts
     ( Contacts
     , new
     , add
@@ -12,7 +12,7 @@ import Control.Monad (forM_)
 import qualified Data.Yaml as Yaml
 import GHC.Generics
 
-import Contact (Contact)
+import Domain.Contact (Contact)
 
 newtype Contacts = Contacts [Contact] deriving (Generic)
 

@@ -1,10 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module ContactSpec where
+module Domain.ContactSpec where
 
 import Test.Hspec
 
-import qualified Contact
+import qualified Domain.Contact as Contact
 
 spec :: Spec
 spec =
