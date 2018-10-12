@@ -1,29 +1,27 @@
-{-# LANGUAGE DeriveGeneric #-}
-
 module Domain.Contacts
     ( Contacts
     , new
     , add
+    , all
     , foreach
     )
 where
 
+import Prelude       (Monad)
 import Control.Monad (forM_)
-import qualified Data.Yaml as Yaml
-import GHC.Generics
 
 import Domain.Contact (Contact)
 
-newtype Contacts = Contacts [Contact] deriving (Generic)
-
-instance Yaml.FromJSON Contacts
-instance Yaml.ToJSON Contacts
+newtype Contacts = Contacts [Contact]
 
 new :: Contacts
 new = Contacts []
 
 add :: Contact -> Contacts -> Contacts
 add contact (Contacts contacts) = Contacts (contact : contacts)
+
+all :: Contacts -> [Contact]
+all (Contacts contacts) = contacts
 
 foreach :: Monad m => Contacts -> (Contact -> m a) -> m ()
 foreach (Contacts contacts) = forM_ contacts

@@ -1,4 +1,3 @@
-{-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 
@@ -11,15 +10,10 @@ module Domain.Contact
 where
 
 import Data.Text (Text)
-import qualified Data.Yaml as Yaml
-import GHC.Generics
 
 data Contact = Contact { name :: Text
                        , number :: Text
-                       } deriving (Eq, Generic, Show)
-
-instance Yaml.FromJSON Contact
-instance Yaml.ToJSON Contact
+                       } deriving (Eq, Show)
 
 new :: Text -> Text -> Either Text Contact
 new name number =
