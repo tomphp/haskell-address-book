@@ -5,10 +5,10 @@ module Domain.MainLogic (main) where
 
 import Control.Monad (forever, when)
 
-import qualified Domain.Application as App
-import qualified Domain.Contacts    as Contacts
 import qualified Domain.Action      as Action
+import qualified Domain.Application as App
 import qualified Domain.Choice      as Choice
+import qualified Domain.Contacts    as Contacts
 
 type Application m = (Applicative m, App.Config m, App.State m, App.Storage m, App.UI m)
 

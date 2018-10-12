@@ -6,11 +6,11 @@ module Integration.ConsoleUI (ConsoleUIT(..)) where
 
 import Control.Monad.IO.Class (MonadIO(..))
 import Control.Monad.Trans    (MonadTrans(..))
-import Control.Monad.Loops    (untilJust)
-import Data.Text              (Text)
-import System.Exit            (ExitCode(ExitFailure), exitWith, exitSuccess)
+import System.Exit            (ExitCode(ExitFailure), exitSuccess, exitWith)
 
-import qualified Data.Text.IO as IO
+import qualified Data.Text           as T
+import qualified Control.Monad.Loops as Loops
+import qualified Data.Text.IO        as TIO
 
 import Domain.Contact (Contact)
 
@@ -34,13 +34,13 @@ instance MonadTrans ConsoleUIT where
     lift = ConsoleUIT
 
 class MonadIO m => Console m where
-    outputLine  :: Text -> m ()
-    readLine    :: m Text
+    outputLine  :: T.Text -> m ()
+    readLine    :: m T.Text
     exitProgram :: Int -> m ()
 
 instance MonadIO m => Console (ConsoleUIT m) where
-    outputLine       = liftIO . IO.putStrLn
-    readLine         = liftIO IO.getLine
+    outputLine       = liftIO . TIO.putStrLn
+    readLine         = liftIO TIO.getLine
     exitProgram code = case code of
                         0 -> liftIO exitSuccess
                         _ -> liftIO $ exitWith (ExitFailure code)
@@ -77,7 +77,7 @@ instance (Monad m, MonadIO m) => App.UI (ConsoleUIT m) where
 
     exit code = outputLine "Exiting" >> exitProgram code
 
-textToAction :: Text -> Either Text Action.Action
+textToAction :: T.Text -> Either T.Text Action.Action
 textToAction =
     \case
         "l" -> Right Action.ListContacts
@@ -94,7 +94,7 @@ printContact contact = do
     outputLine "---"
 
 
-textToChoice :: Text -> Either Text Choice.Choice
+textToChoice :: T.Text -> Either T.Text Choice.Choice
 textToChoice =
     \case
         "y" -> Right Choice.Yes
@@ -110,9 +110,9 @@ printCommandList = do
     outputLine "| q  Quit                                                        |"
     outputLine "+----------------------------------------------------------------+"
 
-untilRight :: (Console m, App.UI m) => m (Either Text a) -> m a
+untilRight :: (Console m, App.UI m) => m (Either T.Text a) -> m a
 untilRight action =
-    untilJust $ do
+    Loops.untilJust $ do
         result <- action
 
         case result of

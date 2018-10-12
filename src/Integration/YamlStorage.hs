@@ -11,8 +11,8 @@ import GHC.Generics           (Generic)
 
 import qualified Data.Bifunctor     as Bifunctor
 import qualified Data.Text          as T
-import qualified Data.Text.IO       as IO
 import qualified Data.Text.Encoding as TE
+import qualified Data.Text.IO       as IO
 import qualified Data.Yaml          as Yaml
 
 import qualified Domain.Application as App
@@ -77,7 +77,7 @@ extractContacts = YamlContacts . map extractContact . Contacts.all
 
 -- YamlContact data type
 
-data YamlContact = YamlContact { name :: Text
+data YamlContact = YamlContact { name   :: Text
                                , number :: Text
                                } deriving (Eq, Generic, Show)
 

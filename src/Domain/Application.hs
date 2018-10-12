@@ -1,5 +1,5 @@
-{-# LANGUAGE ConstrainedClassMethods #-}
-{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE ConstrainedClassMethods    #-}
+{-# LANGUAGE ConstraintKinds            #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}

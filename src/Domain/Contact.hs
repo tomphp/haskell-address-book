@@ -11,7 +11,7 @@ where
 
 import Data.Text (Text)
 
-data Contact = Contact { name :: Text
+data Contact = Contact { name   :: Text
                        , number :: Text
                        } deriving (Eq, Show)
 

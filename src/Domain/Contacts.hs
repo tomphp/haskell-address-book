@@ -7,8 +7,8 @@ module Domain.Contacts
     )
 where
 
-import Prelude       (Monad)
 import Control.Monad (forM_)
+import Prelude       (Monad)
 
 import Domain.Contact (Contact)
 

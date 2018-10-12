@@ -1,16 +1,16 @@
-{-# LANGUAGE ConstraintKinds #-}
-{-# LANGUAGE DeriveFunctor #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE ConstraintKinds      #-}
+{-# LANGUAGE DeriveFunctor        #-}
+{-# LANGUAGE FlexibleContexts     #-}
+{-# LANGUAGE FlexibleInstances    #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 
 module Free.Monolith (Definition(..), run) where
 
 import Control.Monad.Trans (MonadTrans(..))
 
-import qualified Control.Monad.Trans.Free as F
 import qualified Control.Monad.Reader     as R
 import qualified Control.Monad.State      as ST
+import qualified Control.Monad.Trans.Free as F
 import qualified Data.Functor.Sum         as Sum
 import qualified Data.Text                as T
 
@@ -18,10 +18,10 @@ import qualified Domain.Application as App
 import qualified Domain.Config      as Config
 import qualified Domain.State       as State
 
-import Domain.Contact  (Contact)
-import Domain.Contacts (Contacts)
 import Domain.Action   (Action)
 import Domain.Choice   (Choice)
+import Domain.Contact  (Contact)
+import Domain.Contacts (Contacts)
 
 data StorageCommand next = ReadContacts FilePath (Either T.Text Contacts -> next)
                          | WriteContacts FilePath Contacts next deriving (Functor)
