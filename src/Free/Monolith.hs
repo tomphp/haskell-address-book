@@ -6,8 +6,7 @@
 
 module Free.Monolith (Definition(..), run) where
 
-import Control.Monad.IO.Class (MonadIO(..))
-import Control.Monad.Trans    (MonadTrans(..))
+import Control.Monad.Trans (MonadTrans(..))
 
 import qualified Control.Monad.Trans.Free as F
 import qualified Control.Monad.Reader     as R
@@ -28,12 +27,12 @@ data StorageCommand next = ReadContacts FilePath (Either T.Text Contacts -> next
                          | WriteContacts FilePath Contacts next deriving (Functor)
 
 data UICommand next = DisplayWelcomeBanner next
-                  | DisplayMessage T.Text next
-                  | DisplayContactList Contacts next
-                  | GetChoice T.Text (Choice -> next)
-                  | GetAction (Action -> next)
-                  | GetContact (Contact -> next)
-                  | Exit Int deriving (Functor)
+                    | DisplayMessage T.Text next
+                    | DisplayContactList Contacts next
+                    | GetChoice T.Text (Choice -> next)
+                    | GetAction (Action -> next)
+                    | GetContact (Contact -> next)
+                    | Exit Int deriving (Functor)
 
 data Definition a = Definition { config :: Config.Config }
 
@@ -43,21 +42,21 @@ type CommandFree = F.MonadFree Command
 
 type FreeApplication = ST.StateT State.State (R.ReaderT Config.Config (F.Free Command))
 
-run :: (MonadIO m, App.Storage m, App.UI m) => Definition () -> FreeApplication () -> m ()
+run :: (App.Storage m, App.UI m) => Definition () -> FreeApplication () -> m ()
 run Definition{config = cfg} =
     interpreter . runReader . runState
   where
     runState state   = ST.runStateT state State.new
     runReader reader = fst <$> R.runReaderT reader cfg
 
-interpreter :: (Monad m, MonadIO m, App.UI m, App.Storage m) => F.Free Command () -> m ()
+interpreter :: (Monad m, App.UI m, App.Storage m) => F.Free Command () -> m ()
 interpreter = F.iterM interpretCommand
 
-interpretCommand :: (Monad m, MonadIO m, App.UI m, App.Storage m) => Command (m ()) -> m ()
+interpretCommand :: (Monad m, App.UI m, App.Storage m) => Command (m ()) -> m ()
 interpretCommand (Sum.InL cmd) = interpretUI cmd
 interpretCommand (Sum.InR cmd) = interpretStorage cmd
 
-interpretUI :: (App.UI m, MonadIO m) => UICommand (m ()) -> m ()
+interpretUI :: App.UI m => UICommand (m ()) -> m ()
 interpretUI (DisplayWelcomeBanner        x) = App.displayWelcomeBanner        >>  x
 interpretUI (DisplayMessage msg          x) = App.displayMessage msg          >>  x
 interpretUI (DisplayContactList contacts x) = App.displayContactList contacts >>  x

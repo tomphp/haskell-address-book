@@ -20,15 +20,6 @@ import qualified Domain.Choice      as Choice
 import qualified Domain.Contact     as Contact
 import qualified Domain.Contacts    as Contacts
 
--- Kill Me
--- instance Console IO where
---     outputLine = IO.putStrLn
---     readLine = IO.getLine
---     exitProgram code = case code of
---                         0 -> exitSuccess
---                         _ -> exitWith (ExitFailure code)
---
-
 newtype ConsoleUIT m a = ConsoleUIT { runConsoleUIT :: m a }
     deriving ( Functor
              , Applicative
@@ -42,25 +33,19 @@ newtype ConsoleUIT m a = ConsoleUIT { runConsoleUIT :: m a }
 instance MonadTrans ConsoleUIT where
     lift = ConsoleUIT
 
--- Segregate Console
--- class MonadIO m => Console m where
---     outputLine  :: Text -> m ()
---     readLine    :: m Text
---     exitProgram :: Int -> m ()
+class MonadIO m => Console m where
+    outputLine  :: Text -> m ()
+    readLine    :: m Text
+    exitProgram :: Int -> m ()
 
-outputLine :: MonadIO m => Text ->  m ()
-outputLine = liftIO . IO.putStrLn
+instance MonadIO m => Console (ConsoleUIT m) where
+    outputLine       = liftIO . IO.putStrLn
+    readLine         = liftIO IO.getLine
+    exitProgram code = case code of
+                        0 -> liftIO exitSuccess
+                        _ -> liftIO $ exitWith (ExitFailure code)
 
-readLine :: MonadIO m => m Text
-readLine = liftIO IO.getLine
-
-exitProgram :: MonadIO m => Int ->  m ()
-exitProgram code = case code of
-                    0 -> liftIO exitSuccess
-                    _ -> liftIO $ exitWith (ExitFailure code)
---
-
-instance (MonadIO m, Monad m) => App.UI (ConsoleUIT m) where
+instance (Monad m, MonadIO m) => App.UI (ConsoleUIT m) where
     displayWelcomeBanner = do
         outputLine "=================================================================="
         outputLine "=== Welcome to the Haskell Phone Book                          ==="
@@ -102,7 +87,7 @@ textToAction =
         _   -> Left "Bad command."
 
 
-printContact :: MonadIO m => Contact -> m ()
+printContact :: Console m => Contact -> m ()
 printContact contact = do
     outputLine $ "Name:   " <> Contact.name contact
     outputLine $ "Number: " <> Contact.number contact
@@ -116,7 +101,7 @@ textToChoice =
         "n" -> Right Choice.No
         _   -> Left "Please enter y or n"
 
-printCommandList :: MonadIO m => m ()
+printCommandList :: Console m => m ()
 printCommandList = do
     outputLine "+-|Commands|-----------------------------------------------------+"
     outputLine "| l  List contacts                                               |"
@@ -125,7 +110,7 @@ printCommandList = do
     outputLine "| q  Quit                                                        |"
     outputLine "+----------------------------------------------------------------+"
 
-untilRight :: (MonadIO m, App.UI m) => m (Either Text a) -> m a
+untilRight :: (Console m, App.UI m) => m (Either Text a) -> m a
 untilRight action =
     untilJust $ do
         result <- action
