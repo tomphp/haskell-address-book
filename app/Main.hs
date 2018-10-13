@@ -14,7 +14,7 @@ import Integration.YamlStorage  as Storage
 import qualified Application   as App
 import qualified Domain.Config as Config
 import qualified Domain.State  as State
-import qualified Free.Monolith as FreeApp
+import qualified Free.FreeApp as FreeApp
 
 main :: IO ()
 main = mainFree

@@ -7,7 +7,7 @@
 {-# LANGUAGE TypeSynonymInstances       #-}
 {-# LANGUAGE UndecidableInstances       #-}
 
-module Free.Monolith (Command, FreeAppT(..), interpretCommand) where
+module Free.FreeApp (Command, FreeAppT(..), interpretCommand) where
 
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Trans    (MonadTrans(..), lift)
@@ -18,27 +18,14 @@ import qualified Control.Monad.Trans.Free as F
 import qualified Data.Functor.Sum         as Sum
 import qualified Data.Text                as T
 
-import qualified Domain.Application as App
-
 import Domain.Action   (Action)
 import Domain.Choice   (Choice)
 import Domain.Contact  (Contact)
 import Domain.Contacts (Contacts)
 
-data StorageCommand next = ReadContacts (Either T.Text Contacts -> next)
-                         | WriteContacts Contacts next deriving (Functor)
+import qualified Domain.Application as App
 
-data UICommand next = DisplayWelcomeBanner next
-                    | DisplayMessage T.Text next
-                    | DisplayContactList Contacts next
-                    | GetChoice T.Text (Choice -> next)
-                    | GetAction (Action -> next)
-                    | GetContact (Contact -> next)
-                    | Exit Int deriving (Functor)
-
-type Command = Sum.Sum UICommand StorageCommand
-
-type CommandFree = F.MonadFree Command
+-- FreeAppT
 
 newtype FreeAppT m a = FreeAppT { runFreeAppT :: m a }
     deriving ( Functor
@@ -67,6 +54,8 @@ instance (Functor m, ST.MonadState c m) => ST.MonadState c (FreeAppT m) where
     put   = lift . ST.put
     state = lift . ST.state
 
+-- Interpreter
+
 interpretCommand :: (Monad m, App.UI m, App.Storage m) => Command (m ()) -> m ()
 interpretCommand (Sum.InL cmd) = interpretUI cmd
 interpretCommand (Sum.InR cmd) = interpretStorage cmd
@@ -84,33 +73,52 @@ interpretStorage :: App.Storage m => StorageCommand (m ()) -> m ()
 interpretStorage (ReadContacts           x) = App.readContacts           >>= x
 interpretStorage (WriteContacts contacts x) = App.writeContacts contacts >>  x
 
+-- Commands
+
+type Command = Sum.Sum UICommand StorageCommand
+
+data StorageCommand next = ReadContacts (Either T.Text Contacts -> next)
+                         | WriteContacts Contacts next deriving (Functor)
+
+data UICommand next = DisplayWelcomeBanner next
+                    | DisplayMessage T.Text next
+                    | DisplayContactList Contacts next
+                    | GetChoice T.Text (Choice -> next)
+                    | GetAction (Action -> next)
+                    | GetContact (Contact -> next)
+                    | Exit Int deriving (Functor)
+
+class Functor f => SubCommand f where
+    wrap :: f a -> Command a
+
+instance SubCommand UICommand where
+    wrap = Sum.InL
+
+instance SubCommand StorageCommand where
+    wrap = Sum.InR
+
+-- Implementations
+
+type CommandFree = F.MonadFree Command
+
 instance (CommandFree m) => App.Storage (FreeAppT m) where
-    readContacts  = storageInputCommand ReadContacts
-    writeContacts = storageOutputCommand . WriteContacts
-
-storageOutputCommand :: CommandFree m => (() -> StorageCommand a) -> FreeAppT m a
-storageOutputCommand command = liftStorage (command ())
-
-storageInputCommand :: CommandFree m => ((a -> a) -> StorageCommand b) -> FreeAppT m b
-storageInputCommand command = liftStorage (command id)
-
-liftStorage :: CommandFree m => StorageCommand a -> FreeAppT m a
-liftStorage = FreeAppT . F.liftF . Sum.InR
+    readContacts  = inputCommand ReadContacts
+    writeContacts = outputCommand . WriteContacts
 
 instance CommandFree m => App.UI (FreeAppT m) where
-    displayWelcomeBanner   = uiOutputCommand DisplayWelcomeBanner
-    displayMessage message = uiOutputCommand (DisplayMessage message)
-    displayContactList     = uiOutputCommand . DisplayContactList
-    getAction              = uiInputCommand GetAction
-    getChoice msg          = uiInputCommand $ GetChoice msg
-    getContact             = uiInputCommand GetContact
-    exit code              = liftUI (Exit code)
+    displayWelcomeBanner = outputCommand DisplayWelcomeBanner
+    displayMessage msg   = outputCommand $DisplayMessage msg
+    displayContactList   = outputCommand . DisplayContactList
+    getAction            = inputCommand GetAction
+    getChoice msg        = inputCommand $ GetChoice msg
+    getContact           = inputCommand GetContact
+    exit code            = liftCommand (Exit code)
 
-uiOutputCommand :: CommandFree m => (() -> UICommand a) -> FreeAppT m a
-uiOutputCommand command = liftUI (command ())
+outputCommand :: (SubCommand cmd, CommandFree m) => (() -> cmd a) -> FreeAppT m a
+outputCommand command = liftCommand (command ())
 
-uiInputCommand :: CommandFree m => ((a -> a) -> UICommand b) -> FreeAppT m b
-uiInputCommand command = liftUI (command id)
+inputCommand :: (SubCommand cmd, CommandFree m) => ((a -> a) -> cmd b) -> FreeAppT m b
+inputCommand command = liftCommand (command id)
 
-liftUI :: CommandFree m => UICommand a -> FreeAppT m a
-liftUI = FreeAppT . F.liftF . Sum.InL
+liftCommand :: (SubCommand cmd, CommandFree m) => cmd a -> FreeAppT m a
+liftCommand = FreeAppT . F.liftF . wrap
