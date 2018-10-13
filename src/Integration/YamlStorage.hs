@@ -23,7 +23,7 @@ class MonadIO m => FileAccess m where
     readFromFile :: FilePath -> m Text
     writeToFile  :: FilePath -> Text -> m ()
 
-newtype YamlStorageT m a = YamlStorageT { runYamlStorageT :: m a }
+newtype YamlStorageT m a = YamlStorageT { runStorageT :: m a }
     deriving ( Functor
              , Applicative
              , Monad

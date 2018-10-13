@@ -1,11 +1,8 @@
 module Application
-    ( ApplicationT(..)
-    , Definition(..)
+    ( module Domain.Application
     , main
-    , run
     )
 where
 
 import Domain.Application (ApplicationT(..))
 import Domain.MainLogic   (main)
-import Free.Monolith      (Definition(..), run)

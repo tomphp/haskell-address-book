@@ -20,7 +20,7 @@ import qualified Domain.Choice      as Choice
 import qualified Domain.Contact     as Contact
 import qualified Domain.Contacts    as Contacts
 
-newtype ConsoleUIT m a = ConsoleUIT { runConsoleUIT :: m a }
+newtype ConsoleUIT m a = ConsoleUIT { runUIT :: m a }
     deriving ( Functor
              , Applicative
              , Monad

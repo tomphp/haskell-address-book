@@ -11,7 +11,7 @@ module Domain.Application where
 import           Control.Monad.IO.Class
 import qualified Control.Monad.Reader   as R
 import qualified Control.Monad.State    as ST
-import qualified Control.Monad.Trans    as T
+import qualified Control.Monad.Trans    as Trans
 import qualified Data.Text              as T
 
 import qualified Domain.Action   as Action
@@ -50,22 +50,24 @@ newtype ApplicationT m a = ApplicationT { runApplicationT :: m a }
              , Applicative
              , Monad
              , MonadIO
+             , Storage
+             , UI
              )
 
 mapApplicationT :: (m a -> n b) -> ApplicationT m a -> ApplicationT n b
 mapApplicationT f m = ApplicationT $ f (runApplicationT m)
 
-instance T.MonadTrans ApplicationT where
+instance Trans.MonadTrans ApplicationT where
     lift = ApplicationT
 
 instance (Functor m, R.MonadReader c m) => R.MonadReader c (ApplicationT m) where
-    ask   = T.lift R.ask
+    ask   = Trans.lift R.ask
     local = mapApplicationT . R.local
 
 instance (Functor m, ST.MonadState c m) => ST.MonadState c (ApplicationT m) where
-    get   = T.lift ST.get
-    put   = T.lift . ST.put
-    state = T.lift . ST.state
+    get   = Trans.lift ST.get
+    put   = Trans.lift . ST.put
+    state = Trans.lift . ST.state
 
 instance R.MonadReader Config.Config m => Config (ApplicationT m) where
     getFilePath = Config.configFile <$> getConfig

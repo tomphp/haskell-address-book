@@ -1,12 +1,16 @@
-{-# LANGUAGE ConstraintKinds      #-}
-{-# LANGUAGE DeriveFunctor        #-}
-{-# LANGUAGE FlexibleContexts     #-}
-{-# LANGUAGE FlexibleInstances    #-}
-{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE ConstraintKinds            #-}
+{-# LANGUAGE DeriveFunctor              #-}
+{-# LANGUAGE FlexibleContexts           #-}
+{-# LANGUAGE FlexibleInstances          #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE TypeSynonymInstances       #-}
+{-# LANGUAGE UndecidableInstances       #-}
 
-module Free.Monolith (Definition(..), run) where
+module Free.Monolith (Command, FreeAppT(..), interpretCommand) where
 
-import Control.Monad.Trans (MonadTrans(..))
+import Control.Monad.IO.Class (MonadIO)
+import Control.Monad.Trans    (MonadTrans(..), lift)
 
 import qualified Control.Monad.Reader     as R
 import qualified Control.Monad.State      as ST
@@ -15,16 +19,14 @@ import qualified Data.Functor.Sum         as Sum
 import qualified Data.Text                as T
 
 import qualified Domain.Application as App
-import qualified Domain.Config      as Config
-import qualified Domain.State       as State
 
 import Domain.Action   (Action)
 import Domain.Choice   (Choice)
 import Domain.Contact  (Contact)
 import Domain.Contacts (Contacts)
 
-data StorageCommand next = ReadContacts FilePath (Either T.Text Contacts -> next)
-                         | WriteContacts FilePath Contacts next deriving (Functor)
+data StorageCommand next = ReadContacts (Either T.Text Contacts -> next)
+                         | WriteContacts Contacts next deriving (Functor)
 
 data UICommand next = DisplayWelcomeBanner next
                     | DisplayMessage T.Text next
@@ -34,23 +36,36 @@ data UICommand next = DisplayWelcomeBanner next
                     | GetContact (Contact -> next)
                     | Exit Int deriving (Functor)
 
-data Definition a = Definition { config :: Config.Config }
-
-type Command = (Sum.Sum UICommand StorageCommand)
+type Command = Sum.Sum UICommand StorageCommand
 
 type CommandFree = F.MonadFree Command
 
-type FreeApplication = ST.StateT State.State (R.ReaderT Config.Config (F.Free Command))
+newtype FreeAppT m a = FreeAppT { runFreeAppT :: m a }
+    deriving ( Functor
+             , Applicative
+             , Monad
+             , MonadIO
+             , App.Config
+             , App.State
+             )
 
-run :: (App.Storage m, App.UI m) => Definition () -> FreeApplication () -> m ()
-run Definition{config = cfg} =
-    interpreter . runReader . runState
-  where
-    runState state   = ST.runStateT state State.new
-    runReader reader = fst <$> R.runReaderT reader cfg
+mapFreeAppT :: (m a -> n b) -> FreeAppT m a -> FreeAppT n b
+mapFreeAppT f = FreeAppT . f . runFreeAppT
 
-interpreter :: (Monad m, App.UI m, App.Storage m) => F.Free Command () -> m ()
-interpreter = F.iterM interpretCommand
+instance MonadTrans FreeAppT where
+    lift = FreeAppT
+
+instance F.MonadFree f m => F.MonadFree f (FreeAppT m) where
+    wrap = F.wrap
+
+instance (Functor m, R.MonadReader c m) => R.MonadReader c (FreeAppT m) where
+    ask   = lift R.ask
+    local = mapFreeAppT . R.local
+
+instance (Functor m, ST.MonadState c m) => ST.MonadState c (FreeAppT m) where
+    get   = lift ST.get
+    put   = lift . ST.put
+    state = lift . ST.state
 
 interpretCommand :: (Monad m, App.UI m, App.Storage m) => Command (m ()) -> m ()
 interpretCommand (Sum.InL cmd) = interpretUI cmd
@@ -66,54 +81,36 @@ interpretUI (GetContact                  x) = App.getContact                  >>
 interpretUI (Exit code)                     = App.exit code
 
 interpretStorage :: App.Storage m => StorageCommand (m ()) -> m ()
-interpretStorage (ReadContacts  _          x) = App.readContacts           >>= x
-interpretStorage (WriteContacts _ contacts x) = App.writeContacts contacts >>  x
+interpretStorage (ReadContacts           x) = App.readContacts           >>= x
+interpretStorage (WriteContacts contacts x) = App.writeContacts contacts >>  x
 
-instance App.Config FreeApplication where
-    getFilePath = Config.configFile <$> App.getConfig
-    getConfig   = R.ask
+instance (CommandFree m) => App.Storage (FreeAppT m) where
+    readContacts  = storageInputCommand ReadContacts
+    writeContacts = storageOutputCommand . WriteContacts
 
-instance App.State FreeApplication where
-    getContacts          = State.getContacts <$> ST.get
-    putContacts contacts = ST.modify (State.setContacts contacts)
-    setUnsaved           = ST.modify State.setUnsaved
-    setSaved             = ST.modify State.setSaved
-    hasUnsaved           = State.hasUnsaved <$> ST.get
-
-instance App.Storage FreeApplication where
-    readContacts = do
-        filePath <- App.getFilePath
-
-        storageInputCommand $ ReadContacts filePath
-
-    writeContacts contacts = do
-        filePath <- App.getFilePath
-
-        storageOutputCommand (WriteContacts filePath contacts)
-
-storageOutputCommand :: CommandFree m => (() -> StorageCommand a) -> m a
+storageOutputCommand :: CommandFree m => (() -> StorageCommand a) -> FreeAppT m a
 storageOutputCommand command = liftStorage (command ())
 
-storageInputCommand :: CommandFree m => ((a -> a) -> StorageCommand b) -> m b
+storageInputCommand :: CommandFree m => ((a -> a) -> StorageCommand b) -> FreeAppT m b
 storageInputCommand command = liftStorage (command id)
 
-liftStorage :: CommandFree m => StorageCommand a -> m a
-liftStorage = F.liftF . Sum.InR
+liftStorage :: CommandFree m => StorageCommand a -> FreeAppT m a
+liftStorage = FreeAppT . F.liftF . Sum.InR
 
-instance App.UI FreeApplication where
-    displayWelcomeBanner   = lift $ uiOutputCommand DisplayWelcomeBanner
-    displayMessage message = lift $ uiOutputCommand (DisplayMessage message)
-    displayContactList     = lift . uiOutputCommand . DisplayContactList
-    getAction              = lift $ uiInputCommand GetAction
-    getChoice msg          = lift $ uiInputCommand $ GetChoice msg
-    getContact             = lift $ uiInputCommand GetContact
-    exit code              = lift $ liftUI (Exit code)
+instance CommandFree m => App.UI (FreeAppT m) where
+    displayWelcomeBanner   = uiOutputCommand DisplayWelcomeBanner
+    displayMessage message = uiOutputCommand (DisplayMessage message)
+    displayContactList     = uiOutputCommand . DisplayContactList
+    getAction              = uiInputCommand GetAction
+    getChoice msg          = uiInputCommand $ GetChoice msg
+    getContact             = uiInputCommand GetContact
+    exit code              = liftUI (Exit code)
 
-uiOutputCommand :: CommandFree m => (() -> UICommand a) -> m a
+uiOutputCommand :: CommandFree m => (() -> UICommand a) -> FreeAppT m a
 uiOutputCommand command = liftUI (command ())
 
-uiInputCommand :: CommandFree m => ((a -> a) -> UICommand b) -> m b
+uiInputCommand :: CommandFree m => ((a -> a) -> UICommand b) -> FreeAppT m b
 uiInputCommand command = liftUI (command id)
 
-liftUI :: CommandFree m => UICommand a -> m a
-liftUI = F.liftF . Sum.InL
+liftUI :: CommandFree m => UICommand a -> FreeAppT m a
+liftUI = FreeAppT . F.liftF . Sum.InL
