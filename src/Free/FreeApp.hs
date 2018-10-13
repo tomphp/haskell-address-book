@@ -40,19 +40,19 @@ mapFreeAppT :: (m a -> n b) -> FreeAppT m a -> FreeAppT n b
 mapFreeAppT f = FreeAppT . f . runFreeAppT
 
 instance MonadTrans FreeAppT where
-    lift = FreeAppT
+  lift = FreeAppT
 
 instance F.MonadFree f m => F.MonadFree f (FreeAppT m) where
-    wrap = F.wrap
+  wrap = F.wrap
 
 instance (Functor m, R.MonadReader c m) => R.MonadReader c (FreeAppT m) where
-    ask   = lift R.ask
-    local = mapFreeAppT . R.local
+  ask   = lift R.ask
+  local = mapFreeAppT . R.local
 
 instance (Functor m, ST.MonadState c m) => ST.MonadState c (FreeAppT m) where
-    get   = lift ST.get
-    put   = lift . ST.put
-    state = lift . ST.state
+  get   = lift ST.get
+  put   = lift . ST.put
+  state = lift . ST.state
 
 -- Interpreter
 
@@ -89,30 +89,30 @@ data UICommand next = DisplayWelcomeBanner next
                     | Exit Int deriving (Functor)
 
 class Functor f => SubCommand f where
-    wrap :: f a -> Command a
+  wrap :: f a -> Command a
 
 instance SubCommand UICommand where
-    wrap = Sum.InL
+  wrap = Sum.InL
 
 instance SubCommand StorageCommand where
-    wrap = Sum.InR
+  wrap = Sum.InR
 
 -- Implementations
 
 type CommandFree = F.MonadFree Command
 
 instance (CommandFree m) => App.Storage (FreeAppT m) where
-    readContacts  = inputCommand ReadContacts
-    writeContacts = outputCommand . WriteContacts
+  readContacts  = inputCommand ReadContacts
+  writeContacts = outputCommand . WriteContacts
 
 instance CommandFree m => App.UI (FreeAppT m) where
-    displayWelcomeBanner = outputCommand DisplayWelcomeBanner
-    displayMessage msg   = outputCommand $DisplayMessage msg
-    displayContactList   = outputCommand . DisplayContactList
-    getAction            = inputCommand GetAction
-    getChoice msg        = inputCommand $ GetChoice msg
-    getContact           = inputCommand GetContact
-    exit code            = liftCommand (Exit code)
+  displayWelcomeBanner = outputCommand DisplayWelcomeBanner
+  displayMessage msg   = outputCommand $DisplayMessage msg
+  displayContactList   = outputCommand . DisplayContactList
+  getAction            = inputCommand GetAction
+  getChoice msg        = inputCommand $ GetChoice msg
+  getContact           = inputCommand GetContact
+  exit code            = liftCommand (Exit code)
 
 outputCommand :: (SubCommand cmd, CommandFree m) => (() -> cmd a) -> FreeAppT m a
 outputCommand command = liftCommand (command ())

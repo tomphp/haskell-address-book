@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+
 module Main (main, mainMtl, mainFree) where
 
 import System.Environment (getArgs)
@@ -7,14 +8,14 @@ import qualified Control.Monad.Reader     as R
 import qualified Control.Monad.State      as ST
 import qualified Control.Monad.Trans.Free as F
 
-import Integration.ConsoleUI    as UI
+import Integration.ConsoleUI   as UI
 -- import Integration.DummyStorage as Storage
-import Integration.YamlStorage  as Storage
+import Integration.YamlStorage as Storage
 
 import qualified Application   as App
 import qualified Domain.Config as Config
 import qualified Domain.State  as State
-import qualified Free.FreeApp as FreeApp
+import qualified Free.FreeApp  as FreeApp
 
 main :: IO ()
 main = mainFree
@@ -23,13 +24,13 @@ main = mainFree
 
 mainMtl :: IO ()
 mainMtl = do
-    config <- loadConfig
+  config <- loadConfig
 
-    runReader config
-        $ runState
-        $ App.runApplicationT
-        $ UI.runUIT
-        $ Storage.runStorageT App.main
+  runReader config
+    $ runState
+    $ App.runApplicationT
+    $ UI.runUIT
+    $ Storage.runStorageT App.main
 
 -- Free
 
@@ -57,6 +58,5 @@ runState state = fst <$> ST.runStateT state State.new
 
 loadConfig :: IO Config.Config
 loadConfig = do
-    args <- getArgs
-
-    return Config.Config { Config.configFile = head args }
+  args <- getArgs
+  return Config.Config { Config.configFile = head args }

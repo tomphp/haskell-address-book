@@ -17,7 +17,7 @@ data Contact = Contact { name   :: Text
 
 new :: Text -> Text -> Either Text Contact
 new name number =
-    case (name == "", number == "") of
-        (True , _    ) -> Left "Name must be present."
-        (_    , True ) -> Left "Number must be present."
-        (False, False) -> Right Contact {..}
+  case (name == "", number == "") of
+    (True , _    ) -> Left "Name must be present."
+    (_    , True ) -> Left "Number must be present."
+    (False, False) -> Right Contact {..}
